@@ -9,6 +9,11 @@ name: Pages
 on:
   push:
     branches: [main]
+  # Daily, because the drift this catches happens in the *other* repository:
+  # releasing Fenix does not touch this one, so nothing here would rebuild and
+  # nothing would notice until somebody edited a page.
+  schedule:
+    - cron: '17 6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -37,6 +42,13 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Before the build, not after: a page telling a reader to depend on a
+      # version that was never released is worse than a page that is briefly
+      # missing, and this is the only moment the two repositories are compared.
+      - name: Check the coordinates against the released versions
+        run: npm run check
+
       - run: npm run build
 
       - uses: actions/configure-pages@v5

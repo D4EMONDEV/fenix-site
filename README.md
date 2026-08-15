@@ -6,7 +6,14 @@ The home page and the documentation, as a VitePress site.
 npm install
 npm run dev      # http://localhost:5173/fenix-site/
 npm run build
+npm run check    # are the versions in the pages the ones Fenix released?
 ```
+
+`npm run check` reads every Gradle snippet in every page and compares it to
+`platforms.json` in the loader's repository. It runs before each deploy and once
+a day — daily because the drift it catches happens in the *other* repository:
+releasing Fenix does not touch this one, so nothing here would otherwise
+rebuild and nothing would notice.
 
 ## Where this belongs
 
