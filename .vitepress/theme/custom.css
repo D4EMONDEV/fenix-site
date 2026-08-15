@@ -1,0 +1,382 @@
+/*
+ * Restraint on purpose.
+ *
+ * The default VitePress theme is already sober, so this changes three things
+ * and nothing else: the type is the reader's own system font rather than a
+ * downloaded one, the accent is the colour of the mark, and the home page's
+ * gradient is turned off. No shadows, no glows, no animation.
+ */
+
+:root {
+  /* The font the reader's operating system already uses everywhere else. */
+  --vp-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --vp-font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Consolas, 'Liberation Mono', monospace;
+
+  /* The mark's own orange, #c2410c, darkened one step so it reads as ink
+     rather than as a highlighter on a white ground. */
+  --vp-c-brand-1: #b23c0b;
+  --vp-c-brand-2: #963208;
+  --vp-c-brand-3: #c2410c;
+  --vp-c-brand-soft: rgba(194, 65, 12, 0.12);
+
+  /* The hero's brand gradient, flattened. */
+  --vp-home-hero-name-color: var(--vp-c-text-1);
+  --vp-home-hero-name-background: none;
+}
+
+.dark {
+  /* Lifted for contrast on a dark ground; the same hue. */
+  --vp-c-brand-1: #f08a4b;
+  --vp-c-brand-2: #e0743a;
+  --vp-c-brand-3: #f7a06b;
+  --vp-c-brand-soft: rgba(240, 138, 75, 0.14);
+}
+
+/* Prose measure. A line of text that runs the full width of a wide screen is
+   read by moving the head, which is why books are not printed that way. */
+.vp-doc > div {
+  max-width: 46rem;
+}
+
+/* The home page: prose, not a poster. */
+.fenix-home {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.fenix-home h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+}
+
+.fenix-home .fenix-lede {
+  font-size: 1.125rem;
+  color: var(--vp-c-text-2);
+  margin: 0 0 2.5rem;
+}
+
+.fenix-home h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2.75rem 0 0.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.fenix-home p {
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+
+.fenix-home code {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875em;
+  background: var(--vp-c-bg-soft);
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+}
+
+/* Two or three plain links out, in a row. Bordered boxes, no cards, no icons. */
+.fenix-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 0;
+}
+
+.fenix-doors a {
+  display: block;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.fenix-doors a:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+.fenix-doors strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.fenix-doors span {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+}
+
+/* Panels used by the settings, account and admin pages. */
+.fenix-panel {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  padding: 1.125rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.fenix-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fenix-field {
+  display: block;
+  margin: 0.75rem 0;
+}
+
+.fenix-field span {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  margin-bottom: 0.35rem;
+}
+
+.fenix-field input,
+.fenix-field select,
+.fenix-field textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+}
+
+.fenix-field textarea {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  min-height: 24rem;
+  resize: vertical;
+}
+
+.fenix-button {
+  font: inherit;
+  font-weight: 500;
+  color: #fff;
+  background: var(--vp-c-brand-1);
+  border: 1px solid var(--vp-c-brand-1);
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.fenix-button:hover:not(:disabled) {
+  background: var(--vp-c-brand-2);
+  border-color: var(--vp-c-brand-2);
+}
+
+.fenix-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fenix-button.secondary {
+  color: var(--vp-c-text-1);
+  background: transparent;
+  border-color: var(--vp-c-divider);
+}
+
+.fenix-note {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+}
+
+.fenix-status {
+  font-size: 0.875rem;
+  border-radius: 4px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.75rem 0 0;
+}
+
+.fenix-status.ok {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.fenix-status.bad {
+  color: var(--vp-c-danger-1);
+  background: var(--vp-c-danger-soft);
+  border: 1px solid transparent;
+}
+
+
+/* ---------------------------------------------------------------- home page */
+
+/* The masthead: the mark at a size where its pixels are legible, the name, and
+   what the thing is. No tagline dressed as a slogan. */
+.fenix-masthead {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.fenix-masthead img {
+  width: 64px;
+  height: 64px;
+  /* Pixel art. Smoothing it is the one thing that would make it look wrong. */
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.fenix-masthead h1 {
+  margin: 0;
+  font-size: 2.25rem;
+}
+
+.fenix-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.75rem;
+  font-size: 0.8125rem;
+}
+
+.fenix-meta span {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  color: var(--vp-c-text-2);
+}
+
+.fenix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 0.5rem;
+}
+
+.fenix-actions a {
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+  color: #fff;
+}
+
+.fenix-actions a.secondary {
+  background: transparent;
+  border-color: var(--vp-c-divider);
+  color: var(--vp-c-text-1);
+}
+
+.fenix-actions a:hover {
+  border-color: var(--vp-c-brand-2);
+}
+
+.fenix-actions a:not(.secondary):hover {
+  background: var(--vp-c-brand-2);
+}
+
+/* The diagram. Line art that inherits the page's own colours, so it is correct
+   in both themes without a second copy. */
+.fenix-figure {
+  margin: 1.75rem 0 0.5rem;
+}
+
+.fenix-figure svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  color: var(--vp-c-text-2);
+}
+
+.fenix-figure figcaption {
+  font-size: 0.8125rem;
+  color: var(--vp-c-text-3);
+  margin-top: 0.6rem;
+  line-height: 1.5;
+}
+
+.fenix-figure .accent {
+  color: var(--vp-c-brand-1);
+}
+
+/* A comparison that is a table, because that is what it is. */
+.fenix-home table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.9375rem;
+}
+
+.fenix-home th,
+.fenix-home td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--vp-c-divider);
+  line-height: 1.55;
+}
+
+.fenix-home th {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  border-bottom-color: var(--vp-c-text-3);
+}
+
+.fenix-home tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fenix-home td:first-child {
+  white-space: nowrap;
+  color: var(--vp-c-text-2);
+}
+
+/* Code on the home page gets the same treatment as in the docs.
+   The layout: page frontmatter means the .vp-doc rules do not apply here, and
+   without them the language label sits in the flow as a stray line reading
+   "java" above every block. This is what vp-doc does with it. */
+.fenix-home div[class*='language-'] {
+  position: relative;
+  border-radius: 6px;
+  margin: 1.25rem 0;
+}
+
+.fenix-home div[class*='language-'] > span.lang {
+  position: absolute;
+  top: 2px;
+  right: 12px;
+  z-index: 2;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vp-c-text-3);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.fenix-home div[class*='language-']:hover > span.lang {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .fenix-masthead {
+    gap: 1rem;
+  }
+  .fenix-masthead img {
+    width: 48px;
+    height: 48px;
+  }
+  .fenix-masthead h1 {
+    font-size: 1.75rem;
+  }
+  .fenix-home td:first-child {
+    white-space: normal;
+  }
+}

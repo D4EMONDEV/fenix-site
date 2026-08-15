@@ -1,0 +1,66 @@
+---
+title: What Ember writes
+---
+
+# What Ember writes
+
+Ember runs at build time, inside a real Minecraft, and leaves JSON files in
+`src/main/generated`. Run it with:
+
+```
+./gradlew :yourmod:ember
+```
+
+A generator is a class with `@Generator`. The annotation processor indexes it
+while it compiles, so a class that is never run is a build error rather than a
+file that quietly never appears.
+
+```java
+@Generator
+public final class ModModels extends EmberModelProvider {
+
+    public ModModels() {
+    }
+
+    @Override
+    protected void models() {
+        cubeAll(ModBlocks.RUBY_BLOCK);
+    }
+}
+```
+
+## The providers
+
+| Class | Writes |
+|-------|--------|
+| `EmberModelProvider` | blockstates, block and item models, item definitions |
+| `EmberLootTableProvider` | block loot tables |
+| `EmberRecipeProvider` | shaped, shapeless, stonecutting, smelting, blasting |
+| `EmberTagsProvider.BlockTagsProvider` | block tags |
+| `EmberTagsProvider.ItemTagsProvider` | item tags |
+| `EmberLanguageProvider` | one language file per class |
+| `EmberOreProvider` | configured and placed features for an ore |
+| `EmberSoundProvider` | `sounds.json` |
+
+## Commit the output
+
+`src/main/generated` belongs in git.
+
+A generator is code, and code changes. If its output lived only in a build
+directory, a change in what Ember writes would reach the game without anybody
+reading it. Committed, it is a diff — a reviewer sees that a blockstate gained
+a rotation or a loot table lost a condition, in the same change that caused it.
+
+## Item definitions, not just models
+
+In 26.2 the file the game looks up for an item is `assets/<ns>/items/<id>.json`,
+not the model. An item with a perfectly good model and no definition beside it
+draws as the missing-texture checker.
+
+`flatItem` and `handheldItem` write both. If you write a model by hand, write
+the definition too.
+
+## See also
+
+- [Models and blockstates](ember-models)
+- [Loot, recipes and tags](ember-data)
