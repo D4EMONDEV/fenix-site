@@ -1,5 +1,7 @@
 ---
 title: Loot, recipes and tags
+section: Ember
+order: 20
 ---
 
 # Loot, recipes and tags

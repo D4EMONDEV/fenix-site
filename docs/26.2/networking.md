@@ -1,5 +1,7 @@
 ---
 title: Networking
+section: Behaviour
+order: 10
 ---
 
 # Networking

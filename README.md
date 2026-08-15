@@ -43,10 +43,28 @@ should not disappear because a newer game exists.
 
 ## Writing pages
 
-Pages are Markdown under `docs/<version>/`. The sidebar comes from the `pages`
-list in `.vitepress/versions.ts`, not from the filenames — a page not in that
-list is not linked, and an entry with no file is a dead link that fails the
-build.
+Pages are Markdown under `docs/<version>/`. Each carries three fields that
+decide where it appears:
+
+```yaml
+---
+title: The Registrar
+section: Content
+order: 0
+---
+```
+
+The sidebar is built from the files themselves, at build time, by
+`.vitepress/sidebar.ts`. There is no list to keep beside them, and that is the
+point: a list gets out of step in two ways, and only one of them is loud. An
+entry with no file is a dead link, which fails the build. A file with no entry
+is a page that exists, is linked from nowhere, and is read by nobody — no
+error, no warning. The second is exactly what the in-browser editor would
+produce on every new page.
+
+`section` may be anything. Names in the `sections` list in `versions.ts` appear
+in that order; anything else gets a heading of its own at the end, rather than
+the page vanishing because somebody typed a name that was not on a list.
 
 Documentation here is written by hand. It is not generated from Javadoc, and it
 should not be: the Javadoc says what a method takes, and these pages exist to
@@ -55,7 +73,8 @@ say what goes wrong when you get it right and it still does not work.
 ## The editor
 
 `/admin` lets somebody with push access to this repository edit a page in the
-browser and commit it. There is no server and no account system of its own —
+browser and commit it, or create one — the new-page form writes the front
+matter above, which is what puts it in the sidebar. There is no server and no account system of its own —
 the token is GitHub's, the permission check is GitHub's, and a save is an
 ordinary commit on `main` that this repository's Pages workflow then builds.
 

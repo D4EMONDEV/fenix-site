@@ -1,10 +1,16 @@
 /**
- * The Minecraft versions the documentation covers.
+ * The Minecraft versions the documentation covers, and the order its sections
+ * appear in.
  *
- * This is the only file to touch when a new one lands. Everything else — the
- * version dropdown, the sidebar for each version, which one `/docs/` redirects
- * to — is built from here, so a version cannot be half-added: present in the
- * menu and missing from the sidebar, or the reverse.
+ * Data only, and deliberately so: this file is read by the build *and* by the
+ * pages that run in a browser — the version menu, the settings page, the
+ * editor. Anything reaching for the filesystem belongs in `sidebar.ts`, which
+ * only the build imports. Put together, Vite externalises `node:fs` for the
+ * browser bundle and the failure waits until somebody calls the wrong
+ * function.
+ *
+ * This is the only file to touch when a new version lands. Everything else is
+ * built from it, so a version cannot be half-added.
  *
  * Adding 26.3: copy `docs/26.2` to `docs/26.3`, add an entry at the top of the
  * list below, and mark the old one `current: false`.
@@ -26,70 +32,16 @@ export const versions: readonly Version[] = [
 export const currentVersion = versions.find(v => v.current) ?? versions[0]
 
 /**
- * The pages of one version's documentation, in reading order.
+ * The order sections appear in, top to bottom.
  *
- * Shared by every version: a page that exists for one and not another would be
- * a dead sidebar entry, so the list is the same and the files are what differ.
+ * A page whose `section` is not named here still appears — under its own
+ * heading, at the end. Better a section in the wrong place than a page nobody
+ * can reach because somebody typed a name that is not on a list.
  */
-export const pages = [
-  {
-    text: 'Getting started',
-    items: [
-      { text: 'What Fenix is', link: 'index' },
-      { text: 'Your first mod', link: 'first-mod' },
-      { text: 'The mod manifest', link: 'mod-manifest' }
-    ]
-  },
-  {
-    text: 'Content',
-    items: [
-      { text: 'The registrar', link: 'registrar' },
-      { text: 'Blocks and items', link: 'blocks-and-items' },
-      { text: 'Entities', link: 'entities' },
-      { text: 'Creative tabs', link: 'creative-tabs' }
-    ]
-  },
-  {
-    text: 'Ember',
-    items: [
-      { text: 'What Ember writes', link: 'ember' },
-      { text: 'Models and blockstates', link: 'ember-models' },
-      { text: 'Loot, recipes and tags', link: 'ember-data' }
-    ]
-  },
-  {
-    text: 'Behaviour',
-    items: [
-      { text: 'Events', link: 'events' },
-      { text: 'Networking', link: 'networking' },
-      { text: 'Commands', link: 'commands' },
-      { text: 'Configuration', link: 'config' }
-    ]
-  },
-  {
-    text: 'Reaching into the game',
-    items: [
-      { text: 'Accessible members', link: 'accessible' },
-      { text: 'Mixins', link: 'mixins' }
-    ]
-  }
+export const sections: readonly string[] = [
+  'Getting started',
+  'Content',
+  'Ember',
+  'Behaviour',
+  'Reaching into the game'
 ]
-
-/** The sidebar for one version, as VitePress wants it. */
-export function sidebarFor(version: string) {
-  return pages.map(section => ({
-    text: section.text,
-    collapsed: false,
-    items: section.items.map(page => ({
-      text: page.text,
-      link: `/docs/${version}/${page.link === 'index' ? '' : page.link}`
-    }))
-  }))
-}
-
-/** Every version's sidebar, keyed by the path it applies under. */
-export function sidebars() {
-  return Object.fromEntries(
-    versions.map(v => [`/docs/${v.id}/`, sidebarFor(v.id)])
-  )
-}

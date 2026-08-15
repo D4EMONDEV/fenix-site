@@ -1,5 +1,7 @@
 ---
 title: The Registrar
+section: Content
+order: 0
 ---
 
 # The registrar

@@ -1,5 +1,7 @@
 ---
 title: Events
+section: Behaviour
+order: 0
 ---
 
 # Events

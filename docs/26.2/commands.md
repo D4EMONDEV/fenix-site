@@ -1,5 +1,7 @@
 ---
 title: Commands
+section: Behaviour
+order: 20
 ---
 
 # Commands

@@ -1,5 +1,7 @@
 ---
 title: Entities
+section: Content
+order: 20
 ---
 
 # Entities

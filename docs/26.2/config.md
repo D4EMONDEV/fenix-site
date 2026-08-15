@@ -1,5 +1,7 @@
 ---
 title: Configuration
+section: Behaviour
+order: 30
 ---
 
 # Configuration

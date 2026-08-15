@@ -1,5 +1,7 @@
 ---
 title: The mod manifest
+section: Getting started
+order: 20
 ---
 
 # The mod manifest

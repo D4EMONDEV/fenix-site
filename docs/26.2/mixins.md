@@ -1,5 +1,7 @@
 ---
 title: Mixins
+section: Reaching into the game
+order: 10
 ---
 
 # Mixins

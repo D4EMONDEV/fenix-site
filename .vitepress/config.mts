@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress'
-import { versions, currentVersion, sidebars } from './versions'
+import { versions, currentVersion } from './versions'
+import { sidebars } from './sidebar'
 
 // Two repositories: the loader's, and this site's own. The site is a
 // repository of its own because the Fenix repository already serves its

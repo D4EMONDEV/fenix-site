@@ -1,5 +1,7 @@
 ---
 title: Blocks and items
+section: Content
+order: 10
 ---
 
 # Blocks and items

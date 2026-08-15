@@ -136,6 +136,68 @@ export async function readDoc(token: string, path: string): Promise<DocFile> {
 }
 
 /**
+ * Commits a page that does not exist yet.
+ *
+ * No sha is sent, which is how the API is told this is a creation. If the file
+ * is already there GitHub refuses rather than replacing it — the right answer,
+ * and the reason this is a separate function instead of an optional argument
+ * that is easy to leave out.
+ *
+ * @param token   the editor's GitHub token
+ * @param path    where the file goes, inside the repository
+ * @param text    the whole file
+ * @param message the commit message
+ * @return the new file's sha, so the editor can keep working on it
+ */
+export async function createDoc(
+  token: string,
+  path: string,
+  text: string,
+  message: string
+): Promise<string> {
+  const bytes = new TextEncoder().encode(text)
+  const result = await call(
+    `/repos/${SITE_REPO.owner}/${SITE_REPO.name}/contents/${path}`,
+    token,
+    {
+      method: 'PUT',
+      body: JSON.stringify({
+        message,
+        content: btoa(String.fromCharCode(...bytes)),
+        branch: SITE_REPO.branch
+      })
+    }
+  )
+  return result.content.sha as string
+}
+
+/**
+ * The front matter every page needs.
+ *
+ * The sidebar is built from these three fields at build time, so a page
+ * without them is a page that appears under "Other" at the bottom — or, with
+ * no title, under its own filename. Writing them here is what makes a new page
+ * turn up where its author meant it to.
+ *
+ * @param title   the heading, and the sidebar entry
+ * @param section which group it belongs to
+ * @param order   position within that group; leave gaps of ten
+ * @return the file's opening block, ending in a newline
+ */
+export function frontMatter(title: string, section: string, order: number): string {
+  // Quoted: a title with a colon in it is otherwise two YAML fields, and the
+  // page silently loses its name.
+  return [
+    '---',
+    `title: ${JSON.stringify(title)}`,
+    `section: ${JSON.stringify(section)}`,
+    `order: ${order}`,
+    '---',
+    ''
+  ].join('\n')
+}
+
+/**
  * Commits an edited page.
  *
  * The sha read with the file goes back with the write, so GitHub refuses the

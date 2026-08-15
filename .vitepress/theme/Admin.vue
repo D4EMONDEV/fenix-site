@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
-  identify, storedToken, listDocs, readDoc, saveDoc,
+  identify, storedToken, listDocs, readDoc, saveDoc, createDoc, frontMatter,
   SITE_REPO, type Identity, type DocFile
 } from './github'
-import { versions, currentVersion } from '../versions'
+import { versions, currentVersion, sections } from '../versions'
 
 const identity = ref<Identity | null>(null)
 const version = ref(currentVersion.id)
@@ -44,6 +44,43 @@ async function open(path: string) {
   try {
     file.value = await readDoc(storedToken(), path)
     message.value = `docs(${version.value}): edit ${path.split('/').pop()}`
+  } catch (e) {
+    status.value = { text: (e as Error).message, ok: false }
+  } finally {
+    busy.value = false
+  }
+}
+
+const creating = ref(false)
+const draft = ref({ slug: '', title: '', section: sections[0], order: 500 })
+
+/** Lowercase, digits and hyphens: what the URL will be, so say so up front. */
+const slugLooksRight = computed(() =>
+  /^[a-z0-9]+(-[a-z0-9]+)*$/.test(draft.value.slug))
+
+async function create() {
+  status.value = null
+  busy.value = true
+  try {
+    const path = `docs/${version.value}/${draft.value.slug}.md`
+    const text =
+      frontMatter(draft.value.title, draft.value.section, Number(draft.value.order)) +
+      `\n# ${draft.value.title}\n\nWrite the page here.\n`
+
+    const sha = await createDoc(storedToken(), path, text,
+      `docs(${version.value}): add ${draft.value.slug}.md`)
+
+    // Straight into the editor, so writing the page is the same visit as
+    // creating it.
+    file.value = { path, sha, text }
+    message.value = `docs(${version.value}): edit ${draft.value.slug}.md`
+    creating.value = false
+    draft.value = { slug: '', title: '', section: sections[0], order: 500 }
+    await loadList()
+    status.value = {
+      text: 'Created. It joins the sidebar on the next build, from its own front matter.',
+      ok: true
+    }
   } catch (e) {
     status.value = { text: (e as Error).message, ok: false }
   } finally {
@@ -119,6 +156,64 @@ async function save() {
         </button>
       </p>
       <p v-else-if="!busy" class="fenix-note">No pages found for {{ version }}.</p>
+
+      <p style="margin-top: 0.5rem">
+        <button class="fenix-button secondary" @click="creating = !creating">
+          {{ creating ? 'Cancel' : 'New page' }}
+        </button>
+      </p>
+    </div>
+
+    <div v-if="creating" class="fenix-panel">
+      <h3>New page in {{ version }}</h3>
+      <p class="fenix-note">
+        The sidebar is built from the pages themselves, so these three fields
+        are what decide where it appears. There is no list to add it to.
+      </p>
+
+      <label class="fenix-field" style="max-width: 22rem">
+        <span>File name — this becomes the address</span>
+        <input v-model="draft.slug" type="text" spellcheck="false" placeholder="block-entities" />
+      </label>
+      <p v-if="draft.slug && !slugLooksRight" class="fenix-note" style="color: var(--vp-c-danger-1)">
+        Lowercase letters, digits and single hyphens only.
+      </p>
+      <p v-else-if="draft.slug" class="fenix-note">
+        /docs/{{ version }}/{{ draft.slug }}
+      </p>
+
+      <label class="fenix-field" style="max-width: 22rem">
+        <span>Title — the heading, and the sidebar entry</span>
+        <input v-model="draft.title" type="text" />
+      </label>
+
+      <label class="fenix-field" style="max-width: 22rem">
+        <span>Section</span>
+        <input v-model="draft.section" list="fenix-sections" type="text" />
+        <datalist id="fenix-sections">
+          <option v-for="name in sections" :key="name" :value="name" />
+        </datalist>
+      </label>
+      <p class="fenix-note">
+        A section that is not one of the usual ones still works — the page gets
+        a heading of its own, at the end.
+      </p>
+
+      <label class="fenix-field" style="max-width: 10rem">
+        <span>Order in the section</span>
+        <input v-model="draft.order" type="number" step="10" />
+      </label>
+      <p class="fenix-note">Lower comes first. Leave gaps of ten.</p>
+
+      <p style="margin-top: 1rem">
+        <button
+          class="fenix-button"
+          :disabled="busy || !slugLooksRight || !draft.title || !draft.section"
+          @click="create"
+        >
+          {{ busy ? 'Creating…' : 'Create' }}
+        </button>
+      </p>
     </div>
 
     <div v-if="file" class="fenix-panel">

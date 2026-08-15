@@ -1,5 +1,7 @@
 ---
 title: Creative tabs
+section: Content
+order: 30
 ---
 
 # Creative tabs

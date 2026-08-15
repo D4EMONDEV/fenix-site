@@ -1,5 +1,7 @@
 ---
 title: What Ember writes
+section: Ember
+order: 0
 ---
 
 # What Ember writes

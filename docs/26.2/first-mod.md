@@ -1,5 +1,7 @@
 ---
 title: Your first mod
+section: Getting started
+order: 10
 ---
 
 # Your first mod

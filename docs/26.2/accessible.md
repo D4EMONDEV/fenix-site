@@ -1,5 +1,7 @@
 ---
 title: Accessible members
+section: Reaching into the game
+order: 0
 ---
 
 # Accessible members

@@ -1,5 +1,7 @@
 ---
 title: What Fenix is
+section: Getting started
+order: 0
 ---
 
 # What Fenix is

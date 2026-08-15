@@ -1,5 +1,7 @@
 ---
 title: Models and blockstates
+section: Ember
+order: 10
 ---
 
 # Models and blockstates
