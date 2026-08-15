@@ -1,5 +1,5 @@
 ---
-title: The registrar
+title: The Registrar
 ---
 
 # The registrar
