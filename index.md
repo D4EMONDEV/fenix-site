@@ -124,9 +124,13 @@ public final class ModModels extends EmberModelProvider {
 
 Thirteen shapes, each writing what vanilla writes for its own equivalent —
 right down to the rotations of a stairs blockstate and the sixteen variants of
-a gate. It also writes loot tables, recipes, tags and language files. The output
-is committed to the repository, so a change in what Ember writes shows up as a
-diff in a review rather than as a surprise in a later build.
+a gate. It also writes loot tables for blocks, mobs and chests, recipes,
+advancements, damage types, enchantments, villager trades, tags for seven
+registries, and language files.
+
+Every one of those is parsed with the game's own codec on each build. A
+datapack file that is wrong loads without complaint and the thing it describes
+never happens, so the codec is the only thing that ever says so.
 
 <p class="fenix-actions" style="margin-top: 1.25rem">
   <a class="secondary" href="/fenix-site/ember">What Ember writes, and why it is committed</a>

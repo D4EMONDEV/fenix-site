@@ -56,6 +56,10 @@ block.get();    // throws until apply() has run
 | `blockSetType(name, …)` | the character a door, trapdoor, button and plate share |
 | `soundEvent`, `particle`, `effect`, `potion` | the rest |
 | `poiType`, `profession` | villagers |
+| `memoryModule`, `sensor`, `activity` | the three pieces of a brain |
+| `gameEvent(name, radius)` | something happening, that sculk can hear |
+| `lootCondition`, `lootFunction`, `lootNumberProvider` | loot extension points |
+| `decoratedPotPattern` | a sherd, and the face it paints |
 | `creativeTab(name, icon)` | a tab of the mod's own |
 
 ## Builders

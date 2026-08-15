@@ -26,6 +26,26 @@ is one block holding two, so breaking it owes two and pays one. A door is two
 block states and breaking either breaks both, so it rolls its table twice and
 pays double.
 
+### What a mob and a chest drop
+
+```java
+entityLoot(ModContent.RUBY_SPRITE)
+        .drop(ModItems.RUBY, 0, 2).looting(1)
+        .save();
+
+chestLoot("ruby_cache")
+        .rolls(2, 4)
+        .item(ModItems.RUBY, 20, 1, 3)
+        .item(ModBlocks.RUBY_BLOCK, 5)
+        .save();
+```
+
+`looting(max)` applies to the drop before it, and is the idiom every vanilla
+mob table uses. Without it a mod's mob ignores the enchantment, which players
+read as the mob being bugged rather than as a table that never mentioned it.
+
+An entity type with no table in `loot_table/entities` drops nothing, silently.
+
 ## Recipes
 
 ```java

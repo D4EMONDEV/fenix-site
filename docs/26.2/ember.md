@@ -40,9 +40,19 @@ public final class ModModels extends EmberModelProvider {
 | `EmberRecipeProvider` | shaped, shapeless, stonecutting, smelting, blasting |
 | `EmberTagsProvider.BlockTagsProvider` | block tags |
 | `EmberTagsProvider.ItemTagsProvider` | item tags |
+| `EmberTagsProvider.EntityTagsProvider` | entity type tags |
+| `EmberTagsProvider.FluidTagsProvider` | fluid tags |
+| `EmberTagsProvider.DamageTypeTagsProvider` | damage type tags |
+| `EmberTagsProvider.EnchantmentTagsProvider` | enchantment tags |
+| `EmberTagsProvider.GameEventTagsProvider` | game event tags |
 | `EmberLanguageProvider` | one language file per class |
 | `EmberOreProvider` | configured and placed features for an ore |
 | `EmberSoundProvider` | `sounds.json` |
+| `EmberAdvancementProvider` | advancements |
+| `EmberDamageTypeProvider` | damage types |
+| `EmberEnchantmentProvider` | enchantments |
+| `EmberTradeProvider` | villager trades, and the sets they are drawn from |
+| `EmberCosmeticsProvider` | jukebox songs, paintings, instruments, banner patterns |
 
 ## Commit the output
 
@@ -62,7 +72,15 @@ draws as the missing-texture checker.
 `flatItem` and `handheldItem` write both. If you write a model by hand, write
 the definition too.
 
+## Everything is checked against the game
+
+Every file listed above is parsed with Minecraft's own codec on each build, by
+a check that boots a real game to do it. That is not thoroughness for its own
+sake: a datapack file that is wrong loads without complaint and the thing it
+describes simply never happens. The codec is the only thing that says so.
+
 ## See also
 
 - [Models and blockstates](ember-models)
 - [Loot, recipes and tags](ember-data)
+- [Advancements, damage and enchantments](ember-more)
