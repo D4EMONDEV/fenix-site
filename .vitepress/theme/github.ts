@@ -88,7 +88,7 @@ export async function identify(token: string): Promise<Identity> {
 }
 
 export interface DocFile {
-  /** Path inside the repository, such as `website/docs/26.2/events.md`. */
+  /** Path inside the repository, such as `docs/26.2/events.md`. */
   path: string
   /** GitHub's handle for the version being edited, needed to save safely. */
   sha: string
@@ -97,11 +97,27 @@ export interface DocFile {
 
 /** Every Markdown file under a version's documentation directory. */
 export async function listDocs(token: string, version: string): Promise<string[]> {
-  const directory = `website/docs/${version}`
-  const entries = await call(
-    `/repos/${SITE_REPO.owner}/${SITE_REPO.name}/contents/${directory}?ref=${SITE_REPO.branch}`,
-    token
-  )
+  // Relative to the repository root, which is also the site root: this
+  // repository is the site. The path carried a `website/` prefix for as long
+  // as the site lived inside the loader's repository, and kept it for one
+  // commit after moving out — the listing came back 404 and the editor said
+  // there were no pages.
+  const directory = `docs/${version}`
+  let entries
+  try {
+    entries = await call(
+      `/repos/${SITE_REPO.owner}/${SITE_REPO.name}/contents/${directory}?ref=${SITE_REPO.branch}`,
+      token
+    )
+  } catch (cause) {
+    // GitHub answers a missing directory with "Not Found" and nothing else,
+    // which says neither what was looked for nor where. Naming the path turns
+    // the next wrong one into something readable rather than a shrug.
+    throw new Error(
+      `${(cause as Error).message} — looked for ${directory} in ` +
+      `${SITE_REPO.owner}/${SITE_REPO.name} on ${SITE_REPO.branch}`
+    )
+  }
   return (entries as { name: string; type: string }[])
     .filter(entry => entry.type === 'file' && entry.name.endsWith('.md'))
     .map(entry => `${directory}/${entry.name}`)
