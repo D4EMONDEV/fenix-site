@@ -60,6 +60,8 @@ block.get();    // throws until apply() has run
 | `gameEvent(name, radius)` | something happening, that sculk can hear |
 | `lootCondition`, `lootFunction`, `lootNumberProvider` | loot extension points |
 | `decoratedPotPattern` | a sherd, and the face it paints |
+| `trigger(name, trigger)` | an advancement trigger of your own — [written up here](./ember-more#a-trigger-of-your-own) |
+| `armorMaterial(name)` | durability, protection and the sound a set makes |
 | `creativeTab(name, icon)` | a tab of the mod's own |
 
 ## Builders

@@ -80,6 +80,50 @@ A recipe naming one block where a family was meant works for that block and
 silently refuses the other eleven. The player who tried birch concludes the mod
 is broken.
 
+## Sounds
+
+Registering a sound event and writing `sounds.json` are two separate things,
+and the second is the one that makes noise.
+
+```java
+public static final Holder<SoundEvent> RUBY_CHIME = REGISTRAR.sound("ruby_chime");
+```
+
+```java
+@Generator
+public final class ModSounds extends EmberSoundProvider {
+
+    @Override
+    protected void sounds() {
+        add(ModContent.RUBY_CHIME, "ruby_chime");
+    }
+}
+```
+
+The second argument is the **file's** name, under
+`assets/<mod>/sounds/ruby_chime.ogg`. It has to be **Ogg Vorbis** — the game
+reads nothing else, and a `.wav` renamed to `.ogg` is a file that is there,
+resolves, and plays silence.
+
+::: warning
+Three ways to end up with a silent sound, none of which logs anything: no
+entry in `sounds.json`, an entry naming a file that is not shipped, or a file
+that is not really an Ogg stream. Fenix's conformance check reads every entry,
+finds the file, and looks at its first four bytes for `OggS`.
+:::
+
+A music disc needs its own sound event rather than borrowing another, because
+a jukebox song declares how long it lasts and the game trusts that number for
+the comparator and for when to stop:
+
+```java
+jukeboxSong("ruby_waltz", ModContent.RUBY_WALTZ)
+        .description("Ruby Waltz")
+        .seconds(4)
+        .comparatorOutput(11)
+        .save();
+```
+
 ## Tags
 
 Name them with the game's constants wherever one exists:

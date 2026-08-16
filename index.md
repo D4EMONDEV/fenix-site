@@ -148,7 +148,7 @@ fenix {
 }
 
 dependencies {
-    fenixApi 'fr.d4emon.fenix:fenix-api:0.6.0+mc26.2'
+    fenixApi 'fr.d4emon.fenix:fenix-api:0.7.0+mc26.2'
 }
 ```
 

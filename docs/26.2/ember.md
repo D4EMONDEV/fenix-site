@@ -53,6 +53,10 @@ public final class ModModels extends EmberModelProvider {
 | `EmberEnchantmentProvider` | enchantments |
 | `EmberTradeProvider` | villager trades, and the sets they are drawn from |
 | `EmberCosmeticsProvider` | jukebox songs, paintings, instruments, banner patterns |
+| `EmberEquipmentProvider` | equipment assets: what armour looks like when worn |
+| `EmberBiomeProvider` | biomes |
+| `EmberDimensionProvider` | dimension types, and the dimensions using them |
+| `EmberStructureProvider` | structures, template pools, sets, processor lists |
 
 ## Commit the output
 

@@ -1,14 +1,14 @@
 ---
-title: Advancements, damage and enchantments
+title: Advancements, armour and damage
 section: Ember
 order: 30
 ---
 
-# Advancements, damage and enchantments
+# Advancements, armour and damage
 
-Three data kinds that used to be code and are now files. All three fail the
-same way when they are wrong: the file loads, the game says nothing, and the
-thing simply never happens.
+Four things that used to be code and are now files: advancements, armour,
+damage types and enchantments. They fail the same way when they are wrong —
+the file loads, the game says nothing, and the thing simply never happens.
 
 ## Advancements
 
@@ -70,9 +70,169 @@ eighty, so anything else goes in verbatim:
 
 ::: warning
 A trigger name that does not exist is not an error. The file loads and the
-advancement can never be earned. Fenix's conformance check parses every
-generated advancement with the game's own codec for exactly this reason.
+advancement can never be earned. Ember reads every advancement back with the
+game's own codec as it writes it, and refuses to write one that would not
+load — so this fails the build instead of failing silently in the world.
 :::
+
+### A trigger of your own
+
+The eighty vanilla triggers describe things vanilla knows about: an item picked
+up, a mob killed, a block placed. None of them can see a number your mod keeps
+for itself, so an advancement about that number needs a trigger you register.
+
+Extend `SimpleCriterionTrigger`, and give it a codec for whatever the
+advancement is allowed to say:
+
+```java
+public final class SwingsTrigger extends SimpleCriterionTrigger<SwingsTrigger.Instance> {
+
+    public record Instance(Optional<ContextAwarePredicate> player, int atLeast)
+            implements SimpleCriterionTrigger.SimpleInstance {
+
+        public static final Codec<Instance> CODEC = RecordCodecBuilder.create(
+                instance -> instance.group(
+                        ContextAwarePredicate.CODEC.optionalFieldOf("player")
+                                .forGetter(Instance::player),
+                        Codec.INT.fieldOf("at_least").forGetter(Instance::atLeast)
+                ).apply(instance, Instance::new));
+    }
+
+    @Override
+    public Codec<Instance> codec() {
+        return Instance.CODEC;
+    }
+
+    public void fire(ServerPlayer player, int swings) {
+        trigger(player, instance -> swings >= instance.atLeast());
+    }
+}
+```
+
+Register it, and name it from an advancement:
+
+```java
+public static final SwingsTrigger SWINGS =
+        REGISTRAR.trigger("swings", new SwingsTrigger());
+```
+
+```java
+advancement("well_swung")
+        .parent("example-mod:hammer")
+        .title("Well Swung")
+        .description("Swing the ruby hammer twenty-five times.")
+        .icon(ModItems.RUBY_HAMMER)
+        .goal()
+        .criterion("swung", "example-mod:swings", "{\"at_least\": 25}")
+        .save();
+```
+
+`Registrar.trigger` registers **eagerly**, unlike the rest of the registrar.
+Advancements are read while a datapack loads, which happens earlier than
+deferred content is bound, and a trigger the reader cannot find makes the
+advancement fail to load. So the object is passed built, not as a factory.
+
+Then call it every time the number changes. The advancement holds the
+threshold, so the code that fires does not need to know it:
+
+```java
+int total = Attachments.get(player, TOTAL_SWINGS) + 1;
+Attachments.set(player, TOTAL_SWINGS, total);
+
+if (player instanceof ServerPlayer server) {
+    SWINGS.fire(server, total);
+}
+```
+
+::: warning
+A trigger that is registered and never fired is an advancement nobody can
+earn — and from inside the game it looks exactly like conditions that are too
+hard, not like a mod that forgot to say when. Registering it is half the work.
+:::
+
+## Armour
+
+Armour is two halves that are registered in different places, and a set with
+only the first half equips, protects, wears down and cannot be seen. Both
+halves are below.
+
+### The material
+
+`armorMaterial` describes the set: how much it takes, how much it gives, and
+what it sounds like when it goes on.
+
+```java
+public static final ArmorMaterial RUBY_ARMOR = REGISTRAR.armorMaterial("ruby")
+        .durability(22)
+        .protection(ArmorType.HELMET, 3)
+        .protection(ArmorType.CHESTPLATE, 7)
+        .protection(ArmorType.LEGGINGS, 5)
+        .protection(ArmorType.BOOTS, 3)
+        .enchantmentValue(12)
+        .toughness(1.5f)
+        .knockbackResistance(0.05f)
+        .build();
+```
+
+Everything except `protection` has iron's value until you change it, so a
+plain set is three lines. `protection` has no default and `build()` throws
+without it: armour that protects for zero is a set that looks finished and
+does nothing, which is not a mistake worth defaulting into.
+
+`durability` is a factor, not a number of points — the game multiplies it by
+each piece's own base, the way vanilla's materials do, so one number covers
+all four pieces.
+
+Then the four items:
+
+```java
+public static final Holder<Item> RUBY_HELMET = REGISTRAR.newItem("ruby_helmet")
+        .stacksTo(1)
+        .armor(RUBY_ARMOR, ArmorType.HELMET)
+        .build();
+```
+
+### The look
+
+The material names an *equipment asset*, and the asset names the textures.
+Ember writes it:
+
+```java
+@Generator
+public final class ModEquipment extends EmberEquipmentProvider {
+
+    @Override
+    protected void equipment() {
+        humanoidArmor("ruby");
+    }
+}
+```
+
+`humanoidArmor` writes **three** layers, because a humanoid is drawn from
+three: `humanoid` for the helmet, chestplate and boots, `humanoid_leggings`
+for the leggings, and `humanoid_baby` for the small version worn by baby mobs.
+Each layer is a directory of its own, so `humanoidArmor("ruby")` wants three
+files:
+
+```
+assets/<mod>/textures/entity/equipment/humanoid/ruby.png
+assets/<mod>/textures/entity/equipment/humanoid_leggings/ruby.png
+assets/<mod>/textures/entity/equipment/humanoid_baby/ruby.png
+```
+
+They are 64×32, laid out like vanilla's — the game reads fixed boxes out of
+them rather than whole images, so a texture of the wrong size renders as a
+slice of the wrong part of the file.
+
+::: warning
+Two of those three were drawn here and the third was not, and nothing said so:
+the armour looked right on a player and was invisible on a baby zombie. Fenix's
+conformance check now reads every layer of every equipment asset and fails the
+build if a texture it names is not on disk.
+:::
+
+Use `asset(name).layer(layer, texture)` for anything that is not a humanoid
+set — a horse's barding, or a wolf's armour, which are their own layers.
 
 ## Damage types
 
