@@ -2,52 +2,25 @@
 /**
  * A mod template generator that runs entirely in the reader's browser.
  *
- * The versions it writes are fetched from platforms.json in the loader's
- * repository — the same file `check-coordinates` reads and the Gradle plugin
- * ships. Nothing here is typed by hand, on purpose: this site once shipped a
- * "Your first mod" page whose build file could not build, and the version
- * check passed the whole time because it was reading a version out of a line
- * that never worked. A generator with its own copy of the numbers is that
- * mistake with a download button on it.
+ * The versions it writes come from platforms.json in the loader's repository —
+ * the same file `check-coordinates` reads and the Gradle plugin ships. Nothing
+ * here is typed by hand, on purpose: this site once shipped a "Your first mod"
+ * page whose build file could not build, and the version check passed the
+ * whole time because it was reading a version out of a line that never worked.
+ * A generator with its own copy of the numbers is that mistake with a download
+ * button on it.
  *
- * If the fetch fails, generation is refused rather than falling back to
- * remembered numbers.
+ * The table is read once, while the site is built, by the data loader beside
+ * this file. It used to be fetched here on every page load, which is one
+ * request to raw.githubusercontent per visitor and answered "HTTP 429" as soon
+ * as a few people opened the page at once — the promise not to guess held, and
+ * the page simply refused to work.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
+import { data as table } from '../platforms.data'
 
-const PLATFORMS =
-  'https://raw.githubusercontent.com/D4EMONDEV/Fenix/main/platforms.json'
-
-interface Platform {
-  minecraft: string
-  java: number
-  api: string
-  loader: string
-  ember: string
-  status: string
-}
-
-const platforms = ref<Platform[]>([])
-const plugin = ref('')
-const loadError = ref('')
-
-onMounted(async () => {
-  try {
-    // With a timeout, because a fetch that never settles leaves this page on
-    // "Reading the version table…" for ever, which says nothing about why.
-    const response = await fetch(PLATFORMS, {
-      cache: 'no-cache',
-      signal: AbortSignal.timeout(8000)
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const table = await response.json()
-    platforms.value = table.platforms
-    plugin.value = table.plugin
-    minecraft.value = table.platforms[0].minecraft
-  } catch (error) {
-    loadError.value = String(error)
-  }
-})
+const platforms = table.platforms
+const plugin = table.plugin
 
 // ------------------------------------------------------------------ the form
 const modName = ref('My Mod')
@@ -57,7 +30,7 @@ const packageName = ref('com.example.mymod')
 const modVersion = ref('1.0.0')
 const authors = ref('')
 const license = ref('MIT')
-const minecraft = ref('')
+const minecraft = ref(platforms[0].minecraft)
 const exampleContent = ref(true)
 const withEmber = ref(true)
 const splitClient = ref(false)
@@ -87,7 +60,7 @@ const className = computed(() => {
 })
 
 const platform = computed(() =>
-  platforms.value.find(p => p.minecraft === minecraft.value) ?? platforms.value[0])
+  platforms.find(p => p.minecraft === minecraft.value) ?? platforms[0])
 
 const problems = computed(() => {
   const found: string[] = []
@@ -240,7 +213,7 @@ function buildScript(): string {
   if (kotlinScript.value) {
     return `plugins {
     id("java")
-    id("fr.d4emon.fenix.dev") version "${plugin.value}"
+    id("fr.d4emon.fenix.dev") version "${plugin}"
 }
 
 group = "${packageName.value.split('.').slice(0, -1).join('.') || packageName.value}"
@@ -253,7 +226,7 @@ fenix {
   }
   return `plugins {
     id 'java'
-    id 'fr.d4emon.fenix.dev' version '${plugin.value}'
+    id 'fr.d4emon.fenix.dev' version '${plugin}'
 }
 
 group = '${packageName.value.split('.').slice(0, -1).join('.') || packageName.value}'
@@ -740,14 +713,7 @@ function download() {
 
 <template>
   <div class="tpl">
-    <p v-if="loadError" class="tpl-error">
-      The version table could not be read from the loader's repository
-      ({{ loadError }}), so this page will not generate a project. Every version
-      it would write comes from that file, and guessing one is how a template
-      hands you a build that cannot resolve.
-    </p>
-
-    <template v-else-if="platform">
+    <template>
       <div class="tpl-grid">
         <label>
           <span>Mod name</span>
@@ -877,7 +843,6 @@ function download() {
       </template>
     </template>
 
-    <p v-else class="tpl-note">Reading the version table…</p>
   </div>
 </template>
 

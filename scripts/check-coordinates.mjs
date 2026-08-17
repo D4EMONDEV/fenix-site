@@ -15,6 +15,14 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
+/**
+ * The site keeps a copy of platforms.json so a build never depends on the
+ * network. This is where the two are compared: the pages are checked against
+ * upstream as before, and the copy is checked against it too, so a copy that
+ * has fallen behind is a failure here rather than a wrong version on the site.
+ */
+const LOCAL = new URL('../platforms.json', import.meta.url)
+
 const PLATFORMS =
   'https://raw.githubusercontent.com/D4EMONDEV/Fenix/main/platforms.json'
 
@@ -73,15 +81,36 @@ async function pages(directory, version = null, found = []) {
   return found
 }
 
+// The committed copy is what the site builds with, so it is what the pages are
+// compared against. Upstream is consulted to check the copy itself.
+const committed = JSON.parse(await readFile(LOCAL, 'utf8'))
+let platforms = committed
+
 const response = await fetch(PLATFORMS)
-if (!response.ok) {
-  console.error(`could not read platforms.json: ${response.status}`)
-  // exitCode rather than exit(): on Windows, exiting while stdout is still
-  // draining aborts the process with a libuv assertion and reports 127, which
-  // a CI step reads as "command not found" rather than "the check failed".
-  process.exitCode = 2
+if (response.ok) {
+  const upstream = await response.json()
+  if (JSON.stringify(committed) !== JSON.stringify(upstream)) {
+    console.error(
+      'the committed platforms.json differs from the one published upstream — ' +
+        'the site would build with stale versions. Refresh it with:'
+    )
+    console.error('\n  cp ../Fenix/platforms.json platforms.json\n')
+    // exitCode rather than exit(): on Windows, exiting while stdout is still
+    // draining aborts the process with a libuv assertion and reports 127, which
+    // a CI step reads as "command not found" rather than "the check failed".
+    process.exitCode = 1
+  }
+  platforms = upstream
+} else {
+  // Not a failure. GitHub rate-limits by address, and refusing to check the
+  // pages because of that would mean the one check that catches stale
+  // coordinates stops running exactly when someone is working quickly.
+  console.warn(
+    `upstream answered HTTP ${response.status}; checking the pages against the ` +
+      'committed copy instead. Whether that copy is current is unverified here.'
+  )
 }
-const platforms = await response.json()
+
 const currentMc = platforms.platforms.find(p => p.status === 'current').minecraft
 
 const problems = []
