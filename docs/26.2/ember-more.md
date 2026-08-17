@@ -262,6 +262,52 @@ untrimmed, not broken, so there is nothing to notice and nothing in the log.
 Fenix reads every pattern's `asset_id`, checks both layers, and fails the build.
 :::
 
+## Dialogs
+
+A screen the **server** opens on a player's client, without the client knowing
+anything about it. New in this line of the game, and the first thing a mod has
+ever been able to put on screen from the server side alone — everything else
+that draws is client code. A dialog is a datapack file, so it appears on a
+vanilla client connected to a modded server.
+
+```java
+@Generator
+public final class ModDialogs extends EmberDialogProvider {
+
+    @Override
+    protected void dialogs() {
+        notice("shrine_found")
+                .title("The Ruby Shrine")
+                .body("Four pillars, weathered by whatever has been here longer than you.")
+                .body("Something below still glitters.")
+                .button("Onwards")
+                .save();
+    }
+}
+```
+
+Then open it:
+
+```java
+player.registryAccess()
+        .lookup(Registries.DIALOG)
+        .flatMap(registry -> registry.get(Identifier.parse("example-mod:shrine_found")))
+        .ifPresent(player::openDialog);
+```
+
+`notice` is the simplest of the five kinds — a title, some paragraphs, one
+button. `withoutPausing()` lets a single-player game keep running behind it,
+which matters for anything shown while the player is being chased.
+`mustAnswer()` refuses escape, so the button is the only way out.
+
+::: warning
+A dialog that does not parse is not opened at all — `openDialog` is handed a
+holder that was never bound — so it fails as a screen that does not appear,
+which is indistinguishable from code that never ran. Ember reads it back with
+the game's codec as it writes it: a misspelled kind gives `Unknown registry key
+[…] minecraft:dialog_type: minecraft:notic`.
+:::
+
 ## Damage types
 
 Since damage became data, hurting a player means declaring the kind of hurt
@@ -322,4 +368,62 @@ one shape common enough to be worth naming.
 An enchantment outside `#minecraft:in_enchanting_table` exists, can be given by
 command, and is never once offered by an enchanting table. It reads as the
 table being unlucky.
+:::
+
+
+### An effect of your own
+
+An enchantment file composes effects, and vanilla ships the vocabulary —
+damage, ignite, a status effect. A mod that wants an effect vanilla has no word
+for registers one:
+
+```java
+public record Drain(int seconds) implements EnchantmentEntityEffect {
+
+    public static final MapCodec<Drain> CODEC = RecordCodecBuilder.mapCodec(
+            i -> i.group(Codec.INT.fieldOf("seconds").forGetter(Drain::seconds))
+                    .apply(i, Drain::new));
+
+    @Override
+    public void apply(ServerLevel level, int enchantLevel, EnchantedItemInUse item,
+                      Entity target, Vec3 at) {
+        // whatever only your mod can do
+    }
+
+    @Override
+    public MapCodec<Drain> codec() {
+        return CODEC;
+    }
+}
+```
+
+```java
+public static final Holder<MapCodec<? extends EnchantmentEntityEffect>> DRAIN =
+        REGISTRAR.enchantmentEffect("ruby_drain", Drain.CODEC);
+```
+
+The **codec** is what is registered, not the effect — an enchantment naming
+`example-mod:ruby_drain` is asking for the codec, which builds an effect from
+the fields the file supplied. Then name it wherever an effect is accepted:
+
+```java
+.effect("minecraft:post_attack", """
+        {
+          "enchanted": "attacker",
+          "affected": "victim",
+          "effect": { "type": "example-mod:ruby_drain", "seconds": 4 }
+        }""")
+```
+
+`enchantmentValueEffect` does the same for the other kind: a way of changing a
+number, where vanilla offers add, multiply and a few curves.
+
+::: warning
+One malformed effect makes the **whole enchantment** fail to load. It is then
+absent from the enchanting table and the anvil, with a single line at pack
+load — which reads as an enchantment that is hard to get.
+
+Ember reads every enchantment back with the game's own codec as it writes it,
+inside a game that has your mod, so a misspelled effect id fails the build:
+`Unknown registry key […]: example-mod:ruby_drian`.
 :::

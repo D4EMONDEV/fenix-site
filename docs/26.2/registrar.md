@@ -61,8 +61,38 @@ block.get();    // throws until apply() has run
 | `lootCondition`, `lootFunction`, `lootNumberProvider` | loot extension points |
 | `decoratedPotPattern` | a sherd, and the face it paints |
 | `trigger(name, trigger)` | an advancement trigger of your own — [written up here](./ember-more#a-trigger-of-your-own) |
+| `stat(name)` | a statistic the game keeps per player and shows under Custom |
+| `feature(name, feature)` | world generation code of your own — [written up here](./ember-worldgen#a-feature-of-your-own) |
+| `enchantmentEffect(name, codec)` | an enchantment effect vanilla has no word for |
+| `testFunction(name, test)` | a game test: code that runs in a real world |
 | `armorMaterial(name)` | durability, protection and the sound a set makes |
 | `creativeTab(name, icon)` | a tab of the mod's own |
+
+## Statistics, and what they are not
+
+```java
+public static final Identifier SWINGS = REGISTRAR.stat("hammer_swings");
+
+player.awardStat(SWINGS);
+```
+
+A statistic and an [attachment](./blocks-and-items) both hold a number per
+player, and they are not interchangeable. An attachment is yours: you decide
+what it means and only your code reads it. A statistic is vanilla's — it shows
+in the statistics screen under Custom, the game saves and restores it, and a
+scoreboard or a command can read it. Reach for a statistic when the number is
+something a player would want to look up.
+
+Pass a `StatFormatter` for anything that is not a plain count: `TIME` for
+ticks, `DISTANCE` for centimetres. Without one the number is shown raw, so a
+duration reads as a tick count nobody can interpret.
+
+::: warning
+A statistic that is awarded but never registered is **dropped** from the
+player's file when it is saved — not rejected. Nothing logs, and it is noticed
+when somebody opens the statistics screen and finds nothing there. Give it a
+name too, under `stat.<namespace>.<name>`, or the screen shows the key.
+:::
 
 ## Builders
 

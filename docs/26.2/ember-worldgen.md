@@ -82,6 +82,22 @@ public final class ModDimensions extends EmberDimensionProvider {
 and `minY + height` must not exceed 2032. Ember checks both, because the game's
 own message for getting it wrong arrives while a world is being created.
 
+### Why your world is not "experimental"
+
+Vanilla's rule is blunt: `isVanillaLike(key, stem) ? stable : experimental`. The
+overworld, the nether and the end generated the way vanilla generates them are
+stable, and **every other dimension is not** — so one dimension from one
+installed mod is enough to put "Experimental Features" and "Here be dragons!"
+in front of a player who only wanted to make a world.
+
+That rule is right for a hand-written datapack, which is what it was written
+for: Mojang cannot promise someone's worldgen JSON will keep loading. It is
+wrong for a mod, whose code and data are shipped and versioned together.
+
+So Fenix declares dimensions outside the `minecraft` namespace stable, and the
+warning does not appear. A datapack that redefines `minecraft:overworld` oddly
+still warns, which is the case the rule exists for.
+
 ### Its own ground
 
 `noiseSettings` borrowed from vanilla above — `minecraft:caves` is a real
@@ -202,6 +218,117 @@ Naming a processor list that was never written is not an error the game
 reports. The structure generates unprocessed — which looks exactly like a
 processor list that was written and does nothing. Fenix follows the reference
 from every pool piece and fails the build if the file is not there.
+:::
+
+## A feature of your own
+
+Everything above is one of vanilla's features configured differently — an ore
+vein is `minecraft:ore` with your block in it. A feature of your own is the
+other kind: a shape nothing in vanilla describes, built by code with the level
+in hand.
+
+```java
+public final class SpireFeature extends Feature<NoneFeatureConfiguration> {
+
+    public SpireFeature() {
+        super(NoneFeatureConfiguration.CODEC);
+    }
+
+    @Override
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        WorldGenLevel level = context.level();
+        if (level.isEmptyBlock(context.origin().below())) {
+            return false;
+        }
+        // build something
+        return true;
+    }
+}
+```
+
+```java
+public static final Holder<Feature<?>> SPIRE =
+        REGISTRAR.feature("ruby_spire", new SpireFeature());
+```
+
+The return value is not cosmetic. A feature that reports success without
+building anything is counted against the biome's budget for the features that
+did — so refusing early, as above, is part of the contract.
+
+Then the two files that make it run, and the biome that names them:
+
+```java
+placedFeature("ruby_spire", "example-mod:ruby_spire", "{}", """
+        [
+          {"type": "minecraft:rarity_filter", "chance": 90},
+          {"type": "minecraft:in_square"},
+          {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"},
+          {"type": "minecraft:biome"}
+        ]""");
+```
+
+```java
+.feature(Step.SURFACE_STRUCTURES, "example-mod:ruby_spire")
+```
+
+::: warning
+Three ways to end up with a feature that never runs, none of which logs: no
+configured feature, no placed feature, or no biome naming the placed one.
+
+Ember reads both files back with the game's own codecs as it writes them —
+inside a game that has your mod, which is the only place a feature you wrote
+can be resolved at all. A misspelled feature id gives `Unknown registry key
+[…]: example-mod:ruby_spir`; a misspelled placement modifier gives
+`minecraft:rarity_filtre`.
+:::
+
+### Trees of your own
+
+A tree is four decisions — trunk shape, foliage shape, what the logs and leaves
+are made of, and what is hung on it afterwards. The last one is a **decorator**,
+and it is by far the cheapest to make your own: the trunk and leaves are already
+placed when it runs, and their positions are handed to it.
+
+```java
+public final class ClusterDecorator extends TreeDecorator {
+
+    public static final MapCodec<ClusterDecorator> CODEC = ...;
+
+    @Override
+    protected TreeDecoratorType<?> type() {
+        return ModContent.CLUSTERS.get();
+    }
+
+    @Override
+    public void place(Context context) {
+        for (BlockPos leaf : context.leaves()) {
+            // hang something under some of them
+        }
+    }
+}
+```
+
+```java
+public static final Holder<TreeDecoratorType<ClusterDecorator>> CLUSTERS =
+        REGISTRAR.treeDecorator("ruby_clusters", ClusterDecorator.CODEC);
+```
+
+`type()` must return **the very object** the registrar handed back, not one
+equal to it. The game finds the decorator's name by looking that instance up in
+the registry, so a different instance writes a decorator that cannot be read
+again — and the tree then loads without it.
+
+`trunkPlacer` does the same for the trunk's shape. It is much more work: a
+placer decides where every log goes and reports which positions the foliage
+should hang from. Build its codec with `trunkPlacerParts`, or the three height
+fields every placer shares are missing.
+
+::: tip
+The configuration a tree takes is long and unforgiving, and it changes between
+versions — 26.2 wants a `below_trunk_provider` that earlier versions did not.
+Ember reads it back with the game's codec as it writes it, so a missing field
+is `No key below_trunk_provider` at build time rather than a tree that never
+grows.
 :::
 
 ## Animal variants

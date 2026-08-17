@@ -38,7 +38,7 @@ fenix {
 
 There is no `dependencies` block, and that is not an omission. The plugin adds
 the Fenix repository, downloads Minecraft, puts
-`fr.d4emon.fenix:fenix-api:0.8.0+mc26.2` on your compile path and the annotation processor beside it, and gives you
+`fr.d4emon.fenix:fenix-api:0.9.0+mc26.2` on your compile path and the annotation processor beside it, and gives you
 `runClient`, `runServer`, `runGameTest` and `ember`. Declaring the API yourself
 is how the two versions drift apart, so the plugin owns it.
 

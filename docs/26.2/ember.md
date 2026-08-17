@@ -57,6 +57,8 @@ public final class ModModels extends EmberModelProvider {
 | `EmberBiomeProvider` | biomes |
 | `EmberDimensionProvider` | dimension types, and the dimensions using them |
 | `EmberStructureProvider` | structures, template pools, sets, processor lists |
+| `EmberTestProvider` | test instances: the files that make game tests run |
+| `EmberDialogProvider` | dialogs the server opens on a client |
 
 ## Commit the output
 

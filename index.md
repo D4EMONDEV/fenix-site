@@ -157,7 +157,7 @@ fenix {
 }
 ```
 
-The plugin brings `fr.d4emon.fenix:fenix-api:0.8.0+mc26.2` with it, so there is no
+The plugin brings `fr.d4emon.fenix:fenix-api:0.9.0+mc26.2` with it, so there is no
 `dependencies` block to write.
 
 `./gradlew runClient` downloads the game and launches it with your mod.

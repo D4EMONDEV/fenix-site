@@ -92,6 +92,77 @@ public static final Holder<Item> HAMMER = REGISTRAR.newItem("ruby_hammer")
         .register();
 ```
 
+## A block entity the client can see
+
+`setChanged()` marks the chunk dirty so a block entity's data is **written to
+disk**. It sends nothing. The client keeps the copy it was handed when the
+chunk loaded, so anything that draws from a block entity — a renderer showing a
+count, a number on a face — shows the value it had at load time for ever, while
+the server and everything the server prints to chat stay perfectly correct.
+
+Three pieces make it visible:
+
+```java
+private void sync() {
+    setChanged();
+    if (level != null) {
+        BlockState state = getBlockState();
+        level.sendBlockUpdated(getBlockPos(), state, state, Block.UPDATE_ALL);
+    }
+}
+
+@Override
+public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    return saveWithoutMetadata(registries);   // what a client gets with the chunk
+}
+
+@Override
+public Packet<ClientGamePacketListener> getUpdatePacket() {
+    return ClientboundBlockEntityDataPacket.create(this);   // and on every change
+}
+```
+
+Miss `getUpdateTag` and the block entity reaches the client empty; miss the
+`sendBlockUpdated` and it never hears about a change. This is the hardest kind
+of block entity bug to place, because both halves are right on their own side.
+
+## Fluids
+
+`newFluid` brings four things at once: a still fluid, a flowing one, the block
+they fill the world with, and a bucket to carry them.
+
+```java
+public static final FluidResult RUBY_BRINE = REGISTRAR.newFluid("ruby_brine")
+        .bucket()
+        .register();
+```
+
+That is the server's half, and it is complete on its own — the fluid flows,
+breaks grass and drowns things. **Nothing is drawn yet.** Rendering is a client
+registration:
+
+```java
+FluidRendering.register(ModContent.RUBY_BRINE,
+        Identifier.withDefaultNamespace("block/water_still"),
+        Identifier.withDefaultNamespace("block/water_flow"),
+        null, 0xFFC8203A);
+```
+
+Borrowing water's sprites and tinting them is the cheapest way to a fluid that
+does not look like water — no textures to draw or ship.
+
+::: danger
+The tint is **ARGB**, and it is multiplied into every sprite. `0xC8203A` is six
+hex digits, looks like a colour in any editor, and has an alpha of **zero** —
+so the fluid is painted completely invisible while everything else about it
+keeps working. You place the source, the grass breaks, it flows, and the screen
+shows the ground.
+
+Vanilla's own constant tints are negative integers for exactly this reason: the
+alpha byte is set. Fenix now rejects a zero-alpha tint outright rather than
+letting you find it in game.
+:::
+
 ## Behaviour vanilla keeps in tables
 
 Burning, stripping, composting and fuel are not properties of a block — they
