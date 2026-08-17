@@ -139,18 +139,26 @@ never happens, so the codec is the only thing that ever says so.
 ## Starting
 
 ```groovy
+// settings.gradle
+pluginManagement {
+    repositories {
+        maven { url = 'https://d4emondev.github.io/Fenix/' }
+        gradlePluginPortal()
+    }
+}
+
+// build.gradle
 plugins {
-    id 'fr.d4emon.fenix.dev' version '0.2.2'
+    id 'fr.d4emon.fenix.dev' version '0.3.0'
 }
 
 fenix {
     minecraft = '26.2'
 }
-
-dependencies {
-    fenixApi 'fr.d4emon.fenix:fenix-api:0.7.0+mc26.2'
-}
 ```
+
+The plugin brings `fr.d4emon.fenix:fenix-api:0.8.0+mc26.2` with it, so there is no
+`dependencies` block to write.
 
 `./gradlew runClient` downloads the game and launches it with your mod.
 

@@ -33,6 +33,7 @@ export default defineConfig({
     nav: [
       { text: 'Documentation', link: `/docs/${currentVersion.id}/`, activeMatch: '/docs/' },
       { text: 'Ember', link: '/ember' },
+      { text: 'Start a mod', link: '/template' },
       {
         // The version menu. Built from versions.ts, so it cannot disagree with
         // the sidebars.

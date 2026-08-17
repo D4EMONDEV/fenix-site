@@ -234,6 +234,34 @@ build if a texture it names is not on disk.
 Use `asset(name).layer(layer, texture)` for anything that is not a humanoid
 set — a horse's barding, or a wolf's armour, which are their own layers.
 
+### Armour trims
+
+A trim is two halves chosen separately at a smithing table: the **pattern** is
+the shape, the **material** is the colour it is drawn in.
+
+```java
+trimPattern("facet");
+trimMaterial("ruby", "ruby");
+```
+
+The pattern's texture goes in two directories, because armour is drawn in two
+layers:
+
+```
+assets/<mod>/textures/trims/entity/humanoid/facet.png
+assets/<mod>/textures/trims/entity/humanoid_leggings/facet.png
+```
+
+Draw them **greyscale**. The material recolours the pattern, so a trim drawn in
+colour comes out right in exactly one material and wrong in every other — and
+nothing says so.
+
+::: warning
+A trim whose texture is missing is not drawn at all. The armour looks
+untrimmed, not broken, so there is nothing to notice and nothing in the log.
+Fenix reads every pattern's `asset_id`, checks both layers, and fails the build.
+:::
+
 ## Damage types
 
 Since damage became data, hurting a player means declaring the kind of hurt

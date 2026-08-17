@@ -28,18 +28,20 @@ const COORDINATES = [
   },
   {
     what: 'the API bundle',
-    // fenixApi 'fr.d4emon.fenix:fenix-api:0.6.0+mc26.2'
-    pattern: /fr\.d4emon\.fenix:fenix-api:([0-9][^'"\s]*)/g,
+    // Matched in a Gradle line or an inline code span, so the closing
+    // backtick is excluded — captured, it made 0.7.0+mc26.2` differ from
+    // the 0.7.0+mc26.2 that was released.
+    pattern: /fr\.d4emon\.fenix:fenix-api:([0-9][^'"`\s]*)/g,
     expected: (platforms, mc) => `${current(platforms, mc).api}+mc${mc}`
   },
   {
     what: 'Ember',
-    pattern: /fr\.d4emon\.fenix:ember:([0-9][^'"\s]*)/g,
+    pattern: /fr\.d4emon\.fenix:ember:([0-9][^'"`\s]*)/g,
     expected: (platforms, mc) => `${current(platforms, mc).ember}+mc${mc}`
   },
   {
     what: 'the loader',
-    pattern: /fr\.d4emon\.fenix:fenix-loader:([0-9][^'"\s]*)/g,
+    pattern: /fr\.d4emon\.fenix:fenix-loader:([0-9][^'"`\s]*)/g,
     expected: (platforms, mc) => `${current(platforms, mc).loader}+mc${mc}`
   }
 ]

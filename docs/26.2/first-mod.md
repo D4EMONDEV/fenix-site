@@ -8,28 +8,39 @@ order: 10
 
 ## The build file
 
+Two files. First `settings.gradle`, which is where Gradle is told **where the
+plugin lives** — Fenix is not on the Gradle Plugin Portal, so without this the
+build stops at `Plugin [id: 'fr.d4emon.fenix.dev'] was not found`:
+
+```groovy
+pluginManagement {
+    repositories {
+        maven { url = 'https://d4emondev.github.io/Fenix/' }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'mymod'
+```
+
+Then `build.gradle`, which is the whole file:
+
 ```groovy
 plugins {
     id 'java'
-    id 'fr.d4emon.fenix.dev' version '0.2.2'
+    id 'fr.d4emon.fenix.dev' version '0.3.0'
 }
 
 fenix {
     minecraft = '26.2'
 }
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    fenixApi 'fr.d4emon.fenix:fenix-api:0.7.0+mc26.2'
-}
 ```
 
-The plugin downloads Minecraft, adds the Fenix repository, and gives you
-`runClient` and `runServer`. It also runs the annotation processor that builds
-the index the loader reads.
+There is no `dependencies` block, and that is not an omission. The plugin adds
+the Fenix repository, downloads Minecraft, puts
+`fr.d4emon.fenix:fenix-api:0.8.0+mc26.2` on your compile path and the annotation processor beside it, and gives you
+`runClient`, `runServer`, `runGameTest` and `ember`. Declaring the API yourself
+is how the two versions drift apart, so the plugin owns it.
 
 ::: tip
 `fenix { minecraft = '26.2' }` is an assignment, not a call. The plugin's

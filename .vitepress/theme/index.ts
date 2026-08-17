@@ -9,13 +9,15 @@ import './custom.css'
 /**
  * The default theme, with three pages of our own registered as components.
  *
- * Settings, the account page and the documentation editor are the only parts
+ * Settings, the account page, the documentation editor and the template
+ * generator are the only parts
  * of this site that do anything at run time. Everything else is Markdown that
  * became HTML at build time and stays that way.
  */
 import Settings from './Settings.vue'
 import Account from './Account.vue'
 import Admin from './Admin.vue'
+import Template from './Template.vue'
 
 export default {
   extends: DefaultTheme,
@@ -23,5 +25,6 @@ export default {
     app.component('Settings', Settings)
     app.component('Account', Account)
     app.component('Admin', Admin)
+    app.component('Template', Template)
   }
 } satisfies Theme

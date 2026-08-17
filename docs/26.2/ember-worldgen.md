@@ -1,5 +1,5 @@
 ---
-title: Biomes, dimensions and structures
+title: Biomes, dimensions, structures and variants
 section: Ember
 order: 35
 ---
@@ -81,6 +81,39 @@ public final class ModDimensions extends EmberDimensionProvider {
 `height` and `minY` are not free numbers: the height must be a multiple of 16
 and `minY + height` must not exceed 2032. Ember checks both, because the game's
 own message for getting it wrong arrives while a world is being created.
+
+### Its own ground
+
+`noiseSettings` borrowed from vanilla above — `minecraft:caves` is a real
+answer and the right one until the dimension wants its own rock.
+
+```java
+noiseSettings("ruby_realm")
+        .defaultBlock("example-mod:ruby_block")
+        .shape(0, 256)
+        .ground(96)
+        .seaLevel(48)
+        .oreVeins(false)
+        .save();
+```
+
+`ground(y)` is where rock gives way to air. `shape` must agree with the
+dimension type using it — where the two disagree the world generates to one
+and is bounded by the other, which shows up as a floor you fall through or a
+ceiling of void.
+
+A noise router is **fifteen density functions and every one is required**. The
+fourteen that describe the overworld's climate mean nothing to a dimension with
+one biome, so Fenix writes them as constant zero and shapes only the one that
+decides where the ground is. That is a real world, not a rich one — pass
+`router(json)` for a rich one.
+
+::: warning
+A router missing a field produces a dimension that fails to load with a message
+naming the field — but only when somebody travels there, which can be weeks
+after the file was written. Fenix parses it with the game's codec at build
+time; dropping one field gives `No key preliminary_surface_level`.
+:::
 
 Then `/execute in example-mod:ruby_realm run tp @s ~ ~ ~`.
 
@@ -169,4 +202,35 @@ Naming a processor list that was never written is not an error the game
 reports. The structure generates unprocessed — which looks exactly like a
 processor list that was written and does nothing. Fenix follows the reference
 from every pool piece and fails the build if the file is not there.
+:::
+
+## Animal variants
+
+Cows, pigs and chickens carry their looks as data now, so a mod can add one
+that looks different without touching the entity.
+
+```java
+variant("cow", "ruby_cow")
+        .model("normal")
+        .texture("example-mod:entity/cow/ruby")
+        .inBiome("example-mod:ruby_caverns", 1)
+        .save();
+```
+
+`model` picks one of the animal's shapes — a cow is `normal`, `cold` or `warm`,
+and those are three different models, not three textures. A texture drawn for
+one is unwrapped wrongly on the others.
+
+`inBiome` takes a biome id or a `#tag`, and a priority: where two variants both
+apply, the higher number wins.
+
+::: warning
+A variant with no spawn conditions is legal. It loads, it is never chosen, and
+it is only ever seen by something that asks for it by name.
+
+And a caveat Fenix is honest about: the conformance check parses these files
+with the game's codec, which catches an unknown model type or a malformed
+condition — but **not** a biome tag that does not exist. Tags are resolved long
+after parsing, so a misspelled one produces a variant nothing ever spawns and
+no check here will say so.
 :::
