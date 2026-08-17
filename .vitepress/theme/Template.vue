@@ -174,6 +174,66 @@ project ships naming a licence it does not carry.
 `
 }
 
+// ------------------------------------------------------------------ the icon
+/**
+ * The mod's icon: its name in black on white, drawn in the browser.
+ *
+ * <p>128 square, which is what a mod list has room for. Drawn rather than
+ * shipped so it carries the name you typed — a placeholder that says which mod
+ * it belongs to is worth more than a generic mark, and it is meant to be
+ * replaced.
+ */
+function drawIcon(): Uint8Array {
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const context = canvas.getContext('2d')!
+
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, size, size)
+
+  // Wrapped by words, because a mod name is usually two or three of them and
+  // one long line scaled to fit would be unreadable at this size.
+  const words = modName.value.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word
+    context.font = 'bold 20px sans-serif'
+    if (context.measureText(next).width > size - 16 && line) {
+      lines.push(line)
+      line = word
+    } else {
+      line = next
+    }
+  }
+  if (line) lines.push(line)
+
+  // Shrink until the longest line fits, rather than clipping it.
+  let fontSize = 22
+  do {
+    context.font = `bold ${fontSize}px sans-serif`
+    fontSize -= 1
+  } while (
+    fontSize > 8 &&
+    lines.some(text => context.measureText(text).width > size - 16)
+  )
+
+  context.fillStyle = '#000000'
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  const step = fontSize + 4
+  const top = size / 2 - ((lines.length - 1) * step) / 2
+  lines.forEach((text, i) => context.fillText(text, size / 2, top + i * step))
+
+  const url = canvas.toDataURL('image/png')
+  const binary = atob(url.slice(url.indexOf(',') + 1))
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
 // ---------------------------------------------------------------- the files
 function buildScript(): string {
   const p = platform.value
@@ -245,6 +305,10 @@ function manifest(): string {
     fields.push(`  "authors": ${JSON.stringify(authorList.value)}`)
   }
   fields.push(`  "license": ${JSON.stringify(license.value)}`)
+  // A path inside the jar, which is where the loader resolves it from. Nothing
+  // in Fenix draws it yet — this is the declaration, so whatever displays a
+  // list of mods can find it without every mod inventing a convention.
+  fields.push(`  "icon": "assets/${modId.value}/icon.png"`)
   // The bundle, not one of its modules. platforms.json carries the bundle's
   // version and not the per-module ones, so naming fenix-api-registry here
   // would mean inventing a number — and the one that looks obvious is the
@@ -499,6 +563,33 @@ const files = computed<Record<string, string>>(() => {
 })
 
 /**
+ * The directories a mod's resources go in, created empty.
+ *
+ * <p>An empty directory is not nothing here: assets/<id> and data/<id> are
+ * where every texture, model, loot table and tag has to live, and a reader who
+ * has to guess the layout guesses wrong — usually by putting files a level too
+ * high, where the game never looks for them.
+ */
+const directories = computed(() => [
+  `src/main/resources/assets/${modId.value}/`,
+  `src/main/resources/data/${modId.value}/`
+])
+
+/**
+ * Files that are bytes rather than text, by path.
+ *
+ * <p>The path is a value; the bytes need a canvas. They are kept apart because
+ * this page is also rendered at build time, where there is no document to draw
+ * on — a computed that called {@code drawIcon} would be evaluated during that
+ * render and fail it.
+ */
+const binaryPaths = computed(() => [`src/main/resources/assets/${modId.value}/icon.png`])
+
+function binaries(): Record<string, Uint8Array> {
+  return { [binaryPaths.value[0]]: drawIcon() }
+}
+
+/**
  * The files as a tree, the way the project looks on disk.
  *
  * <p>Directories first and then files, each side sorted, so the shape is the
@@ -513,7 +604,13 @@ interface Node {
 }
 
 const tree = computed<Node[]>(() => {
-  const paths = Object.keys(files.value).sort()
+  // Directories end in a slash so they sort beside their contents and are
+  // drawn as folders rather than as files with no extension.
+  const paths = [
+    ...Object.keys(files.value),
+    ...binaryPaths.value,
+    ...directories.value
+  ].sort()
   const out: Node[] = []
   const seen = new Set<string>()
 
@@ -526,7 +623,10 @@ const tree = computed<Node[]>(() => {
         out.push({ name: parts[i], depth: i, directory: true })
       }
     }
-    out.push({ name: parts[parts.length - 1], path, depth: parts.length - 1, directory: false })
+    const leaf = parts[parts.length - 1]
+    if (leaf !== '') {
+      out.push({ name: leaf, path, depth: parts.length - 1, directory: false })
+    }
   }
 
   // Sorting the paths put every file of a directory together already; this
@@ -541,6 +641,9 @@ const previewName = ref('')
 function show(name: string) {
   previewName.value = name
   preview.value = files.value[name]
+    ?? (binaryPaths.value.includes(name)
+      ? '(a 128×128 PNG, drawn from the mod name — replace it with your own)'
+      : '')
 }
 
 // -------------------------------------------------------------------- the zip
@@ -562,7 +665,18 @@ function crc32(bytes: Uint8Array): number {
   return (c ^ 0xffffffff) >>> 0
 }
 
-function zip(entries: Record<string, string>, root: string): Blob {
+/**
+ * @param entries text files, by path
+ * @param binaries files that are bytes already, by path
+ * @param dirs directories to create even though they hold nothing yet
+ * @param root the folder everything is unpacked into
+ */
+function zip(
+  entries: Record<string, string>,
+  binaries: Record<string, Uint8Array>,
+  dirs: string[],
+  root: string
+): Blob {
   const encoder = new TextEncoder()
   const chunks: Uint8Array[] = []
   const central: Uint8Array[] = []
@@ -571,9 +685,19 @@ function zip(entries: Record<string, string>, root: string): Blob {
   const u16 = (n: number) => [n & 0xff, (n >>> 8) & 0xff]
   const u32 = (n: number) => [n & 0xff, (n >>> 8) & 0xff, (n >>> 16) & 0xff, (n >>> 24) & 0xff]
 
-  for (const [path, text] of Object.entries(entries)) {
+  // A directory is an entry whose name ends in a slash and whose content is
+  // empty. Without one, unpacking a zip that only holds files silently drops
+  // every folder that has nothing in it — which is exactly the two this
+  // template wants to hand over.
+  const all: Array<[string, Uint8Array]> = [
+    ...dirs.map(dir => [dir.endsWith('/') ? dir : dir + '/', new Uint8Array(0)] as [string, Uint8Array]),
+    ...Object.entries(entries).map(([path, text]) =>
+      [path, encoder.encode(text)] as [string, Uint8Array]),
+    ...Object.entries(binaries)
+  ]
+
+  for (const [path, data] of all) {
     const name = encoder.encode(`${root}/${path}`)
-    const data = encoder.encode(text)
     const sum = crc32(data)
 
     const local = new Uint8Array([
@@ -604,7 +728,7 @@ function zip(entries: Record<string, string>, root: string): Blob {
 }
 
 function download() {
-  const blob = zip(files.value, modId.value)
+  const blob = zip(files.value, binaries(), directories.value, modId.value)
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url

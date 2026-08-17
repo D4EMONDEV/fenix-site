@@ -16,6 +16,7 @@ order: 20
   "name": "My Mod",
   "authors": ["You"],
   "license": "MIT",
+  "icon": "assets/mymod/icon.png",
   "depends": {
     "fenix": ">=0.1.0",
     "fenix-api-registry": ">=0.4.0"
@@ -41,10 +42,28 @@ order: 20
 | `description` | no | a sentence about the mod |
 | `authors` | no | a list of names |
 | `license` | no | an SPDX identifier, such as `MIT` |
+| `icon` | no | a path inside the jar, such as `assets/mymod/icon.png` |
 | `contact` | no | names to URLs — homepage, issues, sources |
 | `side` | no | `client`, `server` or `both`; `both` unless you say otherwise |
 | `breaks` | no | ids this mod cannot run alongside |
 | `after` | no | ids to load before this one, without depending on them |
+
+## The icon
+
+A path inside the jar, resolved from its root — so `assets/mymod/icon.png` sits
+with the rest of your resources rather than in a directory invented for it.
+
+An absolute path, or one climbing out of the jar with `..`, is refused when the
+manifest is read rather than resolved. This is the one field in a manifest that
+names a file, and a manifest is data a mod ships.
+
+::: warning
+**Fenix does not draw it.** There is no mod list screen yet. This is the
+declaration, so that whatever comes to display mods — Fenix's own screen, or a
+tool outside the game — can find it without every mod inventing a convention.
+Declaring one today costs nothing and is read correctly; expecting to see it
+somewhere today is expecting a screen that does not exist.
+:::
 
 ## What is not here
 
