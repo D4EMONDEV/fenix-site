@@ -270,8 +270,22 @@ import fr.d4emon.fenix.api.Mod;
  * and the annotation processor records it while the mod compiles — so renaming
  * it fails the build rather than the launch.
  */
-@Mod("${modId.value}")
+@Mod(${className.value}.MODID)
 public final class ${className.value} implements FenixMod {
+
+    /**
+     * The mod's id, written once.
+     *
+     * <p>It is the namespace every block, item, tag and file of yours lives
+     * under, so it is repeated a great many times — and a typo in one of them
+     * is content registered under a namespace nothing else uses, which loads
+     * without complaint.
+     *
+     * <p>{@code static final}, not just {@code static}: an annotation's value
+     * has to be a compile-time constant, and {@code @Mod(MODID)} does not
+     * compile without the {@code final}.
+     */
+    public static final String MODID = "${modId.value}";
 
     public ${className.value}() {
     }
@@ -284,7 +298,7 @@ ${exampleContent.value
         ModContent.REGISTRAR.apply();`
         : `        // Declare content in a class of its own, then bind it here:
         //
-        //     public static final Registrar REGISTRAR = Registrar.of("${modId.value}");
+        //     public static final Registrar REGISTRAR = Registrar.of(${className.value}.MODID);
         //     public static final Holder<Block> MY_BLOCK = REGISTRAR.newBlock("my_block")
         //             .strength(3f, 6f).withItem().register();
         //
@@ -318,7 +332,7 @@ import net.minecraft.world.level.block.Block;
  */
 public final class ModContent {
 
-    public static final Registrar REGISTRAR = Registrar.of("${modId.value}");
+    public static final Registrar REGISTRAR = Registrar.of(${className.value}.MODID);
 
     public static final Holder<Block> EXAMPLE_BLOCK = REGISTRAR.newBlock("example_block")
             .strength(3f, 6f)
@@ -380,6 +394,7 @@ function clientEntry(): string {
 import fr.d4emon.fenix.api.Fenix;
 import fr.d4emon.fenix.api.FenixMod;
 import fr.d4emon.fenix.api.Mod;
+import ${packageName.value}.${className.value};
 
 /**
  * The client half of ${modName.value}.
@@ -393,7 +408,7 @@ import fr.d4emon.fenix.api.Mod;
  * one manifest and one id; a client class declaring an id of its own makes a
  * jar whose index and manifest disagree, and the loader refuses it.
  */
-@Mod("${modId.value}")
+@Mod(${className.value}.MODID)
 public final class ${className.value}Client implements FenixMod {
 
     public ${className.value}Client() {
@@ -480,6 +495,42 @@ const files = computed<Record<string, string>>(() => {
   if (splitClient.value) {
     out[`src/client/java/${dir}/client/${className.value}Client.java`] = clientEntry()
   }
+  return out
+})
+
+/**
+ * The files as a tree, the way the project looks on disk.
+ *
+ * <p>Directories first and then files, each side sorted, so the shape is the
+ * one an editor's sidebar shows. A flat list of full paths reads as noise as
+ * soon as there are packages, which is immediately.
+ */
+interface Node {
+  name: string
+  path?: string
+  depth: number
+  directory: boolean
+}
+
+const tree = computed<Node[]>(() => {
+  const paths = Object.keys(files.value).sort()
+  const out: Node[] = []
+  const seen = new Set<string>()
+
+  for (const path of paths) {
+    const parts = path.split('/')
+    for (let i = 0; i < parts.length - 1; i++) {
+      const prefix = parts.slice(0, i + 1).join('/')
+      if (!seen.has(prefix)) {
+        seen.add(prefix)
+        out.push({ name: parts[i], depth: i, directory: true })
+      }
+    }
+    out.push({ name: parts[parts.length - 1], path, depth: parts.length - 1, directory: false })
+  }
+
+  // Sorting the paths put every file of a directory together already; this
+  // only lifts directories above the files that sit beside them.
   return out
 })
 
@@ -672,11 +723,20 @@ function download() {
           Paste that in before you publish.
         </p>
 
-        <div class="tpl-files">
-          <button v-for="name in fileNames" :key="name"
-                  :class="{ active: name === previewName }" @click="show(name)">
-            {{ name }}
-          </button>
+        <div class="tpl-tree">
+          <p class="tpl-tree-root">{{ modId }}/</p>
+          <template v-for="node in tree" :key="(node.path ?? node.name) + node.depth">
+            <p v-if="node.directory" class="tpl-dir"
+               :style="{ paddingLeft: (node.depth + 1) * 1.1 + 'rem' }">
+              {{ node.name }}/
+            </p>
+            <button v-else class="tpl-file"
+                    :class="{ active: node.path === previewName }"
+                    :style="{ paddingLeft: (node.depth + 1) * 1.1 + 'rem' }"
+                    @click="show(node.path!)">
+              {{ node.name }}
+            </button>
+          </template>
         </div>
 
         <pre v-if="preview" class="tpl-preview"><code>{{ preview }}</code></pre>
@@ -723,13 +783,29 @@ function download() {
   margin-top: 1rem; padding: .75rem .9rem; border-radius: 6px;
   border: 1px solid var(--vp-c-danger-1); background: var(--vp-c-danger-soft);
 }
-.tpl-files { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.25rem; }
-.tpl-files button {
-  padding: .3rem .6rem; font-size: .8rem; font-family: var(--vp-font-family-mono);
-  border: 1px solid var(--vp-c-divider); border-radius: 5px;
-  background: var(--vp-c-bg-soft); color: var(--vp-c-text-2); cursor: pointer;
+.tpl-tree {
+  margin-top: 1.25rem; padding: .6rem 0; border-radius: 8px;
+  border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft);
+  font-family: var(--vp-font-family-mono); font-size: .8rem;
+  max-height: 22rem; overflow: auto;
 }
-.tpl-files button.active { border-color: var(--vp-c-brand-1); color: var(--vp-c-text-1); }
+.tpl-tree-root {
+  margin: 0 0 .2rem; padding: .15rem .8rem; color: var(--vp-c-text-1); font-weight: 600;
+}
+.tpl-dir {
+  margin: 0; padding-top: .15rem; padding-bottom: .15rem;
+  color: var(--vp-c-text-3);
+}
+.tpl-file {
+  display: block; width: 100%; text-align: left; border: 0; border-radius: 0;
+  padding-top: .15rem; padding-bottom: .15rem;
+  background: none; color: var(--vp-c-text-2); font: inherit; cursor: pointer;
+}
+.tpl-file:hover { background: var(--vp-c-bg-alt); color: var(--vp-c-text-1); }
+.tpl-file.active {
+  background: var(--vp-c-bg-alt); color: var(--vp-c-text-1);
+  box-shadow: inset 2px 0 0 var(--vp-c-brand-1);
+}
 .tpl-preview {
   margin-top: .75rem; max-height: 26rem; overflow: auto;
   background: var(--vp-c-bg-alt); border: 1px solid var(--vp-c-divider);
