@@ -33,7 +33,12 @@ const loadError = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetch(PLATFORMS, { cache: 'no-cache' })
+    // With a timeout, because a fetch that never settles leaves this page on
+    // "Reading the version table…" for ever, which says nothing about why.
+    const response = await fetch(PLATFORMS, {
+      cache: 'no-cache',
+      signal: AbortSignal.timeout(8000)
+    })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const table = await response.json()
     platforms.value = table.platforms
@@ -53,6 +58,7 @@ const modVersion = ref('1.0.0')
 const authors = ref('')
 const license = ref('MIT')
 const minecraft = ref('')
+const exampleContent = ref(true)
 const withEmber = ref(true)
 const splitClient = ref(false)
 const kotlinScript = ref(true)
@@ -272,9 +278,19 @@ public final class ${className.value} implements FenixMod {
 
     @Override
     public void onRegister(Fenix fenix) {
-        // Binds everything ModContent declared. Until this runs, its holders
+${exampleContent.value
+        ? `        // Binds everything ModContent declared. Until this runs, its holders
         // are unbound and calling get() on one throws.
-        ModContent.REGISTRAR.apply();
+        ModContent.REGISTRAR.apply();`
+        : `        // Declare content in a class of its own, then bind it here:
+        //
+        //     public static final Registrar REGISTRAR = Registrar.of("${modId.value}");
+        //     public static final Holder<Block> MY_BLOCK = REGISTRAR.newBlock("my_block")
+        //             .strength(3f, 6f).withItem().register();
+        //
+        //     REGISTRAR.apply();
+        //
+        // Nothing a registrar declared exists until apply() has run.`}
     }
 
     @Override
@@ -326,8 +342,8 @@ function emberGenerator(): string {
   return `package ${packageName.value}.data;
 
 import fr.d4emon.fenix.ember.EmberLanguageProvider;
-import fr.d4emon.fenix.ember.Generator;
-import ${packageName.value}.ModContent;
+import fr.d4emon.fenix.ember.Generator;${exampleContent.value ? `
+import ${packageName.value}.ModContent;` : ''}
 
 /**
  * The English names for what this mod adds.
@@ -350,7 +366,9 @@ public final class ModLanguage extends EmberLanguageProvider {
 
     @Override
     protected void translations() {
-        add(ModContent.EXAMPLE_BLOCK, "Example Block");
+${exampleContent.value
+        ? '        add(ModContent.EXAMPLE_BLOCK, "Example Block");'
+        : `        // add(ModContent.MY_BLOCK, "My Block");`}
     }
 }
 `
@@ -422,6 +440,9 @@ downloaded from a web page is not something you should run without looking.
 ${splitClient.value ? '- `src/client/java` — the client half, which a server never loads\n' : ''}\
 ${withEmber.value ? '- `src/main/generated` — what Ember writes; commit it\n' : ''}\
 - \`src/main/resources/fenix.mod.json\` — the manifest
+${exampleContent.value
+  ? '\nIt comes with one block, in the Building Blocks tab, so there is something to see the first time you run it.'
+  : '\nIt comes with nothing but the entry point. Declare content in a registrar and bind it in `onRegister`.'}
 
 Licensed under ${license.value}.
 `
@@ -448,8 +469,10 @@ const files = computed<Record<string, string>>(() => {
     'LICENSE': licenseFile(),
     '.gitignore': gitignore(),
     'src/main/resources/fenix.mod.json': manifest(),
-    [`src/main/java/${dir}/${className.value}.java`]: entryPoint(),
-    [`src/main/java/${dir}/ModContent.java`]: content()
+    [`src/main/java/${dir}/${className.value}.java`]: entryPoint()
+  }
+  if (exampleContent.value) {
+    out[`src/main/java/${dir}/ModContent.java`] = content()
   }
   if (withEmber.value) {
     out[`src/main/java/${dir}/data/ModLanguage.java`] = emberGenerator()
@@ -613,12 +636,19 @@ function download() {
       </div>
 
       <div class="tpl-toggles">
+        <label><input v-model="exampleContent" type="checkbox" /> Example content</label>
         <label><input v-model="withEmber" type="checkbox" /> Ember generator</label>
         <label><input v-model="splitClient" type="checkbox" /> Split client and main</label>
       </div>
 
       <p class="tpl-note">
-        Neither toggle changes the build file, because neither can. The Gradle
+        <strong>Example content</strong> is a block, its creative tab entry and
+        its name — enough that the first <code>runClient</code> shows something.
+        Without it you get the entry point and nothing else.
+      </p>
+
+      <p class="tpl-note">
+        The other two toggles do not change the build file, because neither can. The Gradle
         plugin always brings Ember and always creates the client source set when
         <code>src/client/java</code> exists — so these decide which
         <em>files</em> you start with, and nothing else. Adding either later is
