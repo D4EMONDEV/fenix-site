@@ -60,15 +60,30 @@ against vanilla's own files by a check that runs on every build.
 
 ## The providers
 
+Eighteen, and each one writes the files for one part of the game.
+
 | Provider | Writes |
 |----------|--------|
 | `EmberModelProvider` | blockstates, block models, item models and definitions |
 | `EmberLootTableProvider` | what a block drops, including the two cases that are not `dropsSelf`: a slab pays twice, a door pays once |
 | `EmberRecipeProvider` | shaped, shapeless, stonecutting, smelting and blasting |
-| `EmberTagsProvider` | block and item tags, by vanilla constant or by name |
+| `EmberTagsProvider` | tags for blocks, items, entities, fluids, damage types, enchantments and game events — seven nested providers, one per registry |
 | `EmberLanguageProvider` | one class per language |
-| `EmberOreProvider` | the configured and placed features for an ore |
 | `EmberSoundProvider` | `sounds.json` |
+| `EmberAdvancementProvider` | advancements, read back with the game's codec as they are written |
+| `EmberEnchantmentProvider` | enchantments, including effects your mod invented |
+| `EmberDamageTypeProvider` | damage types, since hurting a player means declaring the kind of hurt |
+| `EmberEquipmentProvider` | equipment assets: what armour looks like on the wearer |
+| `EmberCosmeticsProvider` | jukebox songs, paintings, instruments, banner patterns, armour trims, animal variants |
+| `EmberTradeProvider` | villager trades, and the sets they are drawn from |
+| `EmberOreProvider` | configured and placed features — for an ore, or for a feature you wrote |
+| `EmberBiomeProvider` | biomes |
+| `EmberDimensionProvider` | dimension types, the dimensions using them, and their noise settings |
+| `EmberStructureProvider` | structures, template pools, structure sets, processor lists |
+| `EmberTestProvider` | test instances: the files that make your game tests run |
+| `EmberDialogProvider` | dialogs the server opens on a client, with no client code at all |
+
+The [documentation](./docs/26.2/ember) covers each of them.
 
 ## Why the output is committed
 

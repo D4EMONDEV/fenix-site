@@ -8,7 +8,7 @@
     "dev": "vitepress dev",
     "build": "vitepress build",
     "preview": "vitepress preview",
-    "check": "node scripts/check-coordinates.mjs"
+    "check": "node scripts/check-coordinates.mjs && node scripts/check-providers.mjs"
   },
   "devDependencies": {
     "vitepress": "^1.6.3",
