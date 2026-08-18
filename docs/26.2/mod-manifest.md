@@ -44,7 +44,7 @@ order: 20
 | `license` | no | an SPDX identifier, such as `MIT` |
 | `icon` | no | a path inside the jar, such as `assets/mymod/icon.png` |
 | `contact` | no | names to URLs — homepage, issues, sources |
-| `side` | no | `client`, `server` or `both`; `both` unless you say otherwise |
+| `side` | no | `client`, `server` or `both`; `both` unless you say otherwise — see [client and server](./sides) |
 | `breaks` | no | ids this mod cannot run alongside |
 | `after` | no | ids to load before this one, without depending on them |
 
