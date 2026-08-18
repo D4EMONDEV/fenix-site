@@ -12,17 +12,15 @@ plugin downloads everything and `./gradlew runClient` launches the game.
 
 ## The installer
 
-There are no prebuilt downloads yet — the release workflow publishes the Maven
-repository and nothing else, so the installer is built from the repository:
+Download it from the [releases
+page](https://github.com/D4EMONDEV/Fenix/releases), unpack the zip for your
+platform, and double-click the application inside. Every release carries one.
+
+Building it yourself is a clone and one task, if you would rather:
 
 ```bash
-git clone https://github.com/D4EMONDEV/Fenix.git
-cd Fenix
 ./gradlew :fenix-installer:distInstaller
 ```
-
-That leaves a zip in `fenix-installer/build/distributions/`. Unpack it and
-double-click the application inside.
 
 It carries its own Java runtime, which is deliberate: Minecraft ships a Java of
 its own but does not put it on the `PATH`, so an installer that needed one
@@ -72,12 +70,9 @@ Reach for the installer when you want to *play* with mods, or to hand someone a
 working install.
 :::
 
-::: warning
-The zip is built for one platform at a time: `jpackage` bundles a runtime for
-the machine it runs on, so building on Windows gives a Windows installer and
-nothing else. macOS and Linux have to be built there.
-
-That is also why there are no downloads on the releases page yet — attaching
-them means running the build on three machines, which the publish workflow does
-not do today.
+::: tip
+`jpackage` bundles a runtime for the machine it runs on, so a Windows build
+gives a Windows installer and nothing else. The release workflow runs it on
+Windows, macOS and Linux, which is why the releases page has one archive per
+platform — and why building it yourself gives you only your own.
 :::
