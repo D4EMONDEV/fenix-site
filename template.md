@@ -1,5 +1,7 @@
 ---
 title: Start a mod
+pageClass: fenix-tool
+aside: false
 ---
 
 # Start a mod

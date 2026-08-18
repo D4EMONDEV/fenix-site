@@ -380,3 +380,25 @@
     white-space: normal;
   }
 }
+
+
+/* The template generator is a tool, not an article: a form, a file tree and a
+   preview, which read badly stacked in a 46rem column and fine side by side.
+   Only this page opts out of the prose measure.
+
+   !important because the theme sets these widths inside media queries. Those
+   come later in the cascade and win at equal specificity, so a plain rule here
+   applies and changes nothing — which is exactly what the measurements showed
+   before this comment existed. */
+.fenix-tool .VPDoc .container,
+.fenix-tool .VPDoc .content,
+.fenix-tool .VPDoc .content-container {
+  max-width: none !important;
+}
+
+/* Not unlimited, though: a form stretched across a 2000px screen is worse than
+   a narrow one. */
+.fenix-tool .vp-doc > div {
+  max-width: 76rem;
+  margin: 0 auto;
+}

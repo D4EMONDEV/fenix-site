@@ -713,7 +713,6 @@ function download() {
 
 <template>
   <div class="tpl">
-    <template>
       <div class="tpl-grid">
         <label>
           <span>Mod name</span>
@@ -813,6 +812,7 @@ function download() {
           Paste that in before you publish.
         </p>
 
+        <div class="tpl-output">
         <div class="tpl-tree">
           <p class="tpl-tree-root">{{ modId }}/</p>
           <template v-for="node in tree" :key="(node.path ?? node.name) + node.depth">
@@ -829,7 +829,8 @@ function download() {
           </template>
         </div>
 
-        <pre v-if="preview" class="tpl-preview"><code>{{ preview }}</code></pre>
+        <pre class="tpl-preview"><code>{{ preview || 'Pick a file to see what it contains.' }}</code></pre>
+        </div>
 
         <p class="tpl-actions">
           <button class="tpl-download" @click="download">Download {{ modId }}.zip</button>
@@ -841,7 +842,6 @@ function download() {
           page is not something to run unexamined.
         </p>
       </template>
-    </template>
 
   </div>
 </template>
@@ -849,8 +849,11 @@ function download() {
 <style scoped>
 .tpl { margin: 1.5rem 0; }
 .tpl-grid {
-  display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  display: grid; gap: 1rem 1.25rem;
+  /* align-items: start, or a field with a checkbox under it stretches every
+     other field on its row to the same height and the form grows holes. */
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
 }
 .tpl-grid label { display: flex; flex-direction: column; gap: .35rem; }
 .tpl-grid label > span { font-size: .85rem; color: var(--vp-c-text-2); }
@@ -861,9 +864,18 @@ function download() {
 }
 .tpl-grid input[disabled] { opacity: .55; }
 .tpl-check { display: flex; align-items: center; gap: .4rem; font-size: .8rem; font-style: normal; }
-.tpl-toggles { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 1rem; }
-.tpl-toggles label { display: flex; align-items: center; gap: .45rem; }
-.tpl-note, .tpl-summary { font-size: .9rem; color: var(--vp-c-text-2); margin-top: 1rem; }
+.tpl-toggles {
+  display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: 1.25rem;
+  padding: .75rem 1rem; border-radius: 8px;
+  border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft);
+}
+.tpl-toggles label {
+  display: flex; align-items: center; gap: .45rem; white-space: nowrap;
+}
+.tpl-note, .tpl-summary {
+  font-size: .9rem; color: var(--vp-c-text-2); margin-top: 1rem;
+  max-width: 46rem;
+}
 .tpl-warn {
   font-size: .9rem; margin-top: 1rem; padding: .75rem .9rem; border-radius: 6px;
   border: 1px solid var(--vp-c-warning-1); background: var(--vp-c-warning-soft);
@@ -872,8 +884,20 @@ function download() {
   margin-top: 1rem; padding: .75rem .9rem; border-radius: 6px;
   border: 1px solid var(--vp-c-danger-1); background: var(--vp-c-danger-soft);
 }
+/* Side by side once there is room: the tree is a list of short names and the
+   preview is wide, so stacking them wastes the width and doubles the height. */
+.tpl-output {
+  display: grid; gap: 1rem; margin-top: 1.25rem;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .tpl-output { grid-template-columns: 1fr; }
+}
+
 .tpl-tree {
-  margin-top: 1.25rem; padding: .6rem 0; border-radius: 8px;
+  margin-top: 0; padding: .6rem 0; border-radius: 8px;
   border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft);
   font-family: var(--vp-font-family-mono); font-size: .8rem;
   max-height: 22rem; overflow: auto;
@@ -896,7 +920,7 @@ function download() {
   box-shadow: inset 2px 0 0 var(--vp-c-brand-1);
 }
 .tpl-preview {
-  margin-top: .75rem; max-height: 26rem; overflow: auto;
+  margin-top: 0; max-height: 26rem; overflow: auto;
   background: var(--vp-c-bg-alt); border: 1px solid var(--vp-c-divider);
   border-radius: 8px; padding: 1rem; font-size: .8rem;
 }
